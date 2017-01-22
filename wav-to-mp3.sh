@@ -1,5 +1,5 @@
 #!/bin/bash
-# usage: $ ./convert-mp3 /path/to/files
+# usage: $ ./wav-to-mp3 /path/to/file.wav
 # docs: http://lame.cvs.sourceforge.net/viewvc/lame/lame/USAGE
 
 filename=$1
