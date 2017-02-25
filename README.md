@@ -1,6 +1,6 @@
 # Media Utility Scripts
 
-Scripts for common conversion tasks on media (video, image, audio) files. I've put these scripts together so I don't have to look up common conversion parameters all the time.
+Bash scripts for common conversion tasks on media (video, image, audio) files. I've put these scripts together so I don't have to look up common conversion parameters all the time. Built to work on OS X.
 
 ## Prerequisites
 
