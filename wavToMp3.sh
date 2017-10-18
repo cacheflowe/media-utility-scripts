@@ -2,7 +2,7 @@
 # docs: http://lame.cvs.sourceforge.net/viewvc/lame/lame/USAGE
 echo '###################################################'
 echo '# Description: Convert a wav/aif file to mp3'
-echo '# Usage: $ $ ./wavToMp3.sh /path/to/file.wav'
+echo '# Usage: $ $ ./wavToMp3.sh /path/to/file.wav [256] [1]'
 echo '# Param 1: Wav or Aif file'
 echo '# Param 2 [Optional]: Bitrate'
 echo '# Param 3 [Optional]: Channels'
