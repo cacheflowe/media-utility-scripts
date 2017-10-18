@@ -10,6 +10,7 @@ These scripts depend on the following libraries:
 * imagemagick
 * gifsicle
 * LAME
+* ImageAlpha
 
 ## Setup
 

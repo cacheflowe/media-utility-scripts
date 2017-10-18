@@ -1,7 +1,37 @@
 #!/bin/bash
-# usage: ./crushPngDir.sh /Absolute/image/dir/ 32
-if [[ $2 -eq 0 ]] ; then
-    echo 'Please pass in color count, like 16 or 64'
+echo '###################################################'
+echo '# Description: Reduce png color pallette on a directory'
+echo '# Usage: $ ./crushPngDir.sh /Absolute/image/dir/ 32'
+echo '# Param 1: Directory'
+echo '# Param 2: Number of colors'
+echo '###################################################'
+
+################################################################################
+################################################################################
+# check parameters
+if [[ $1 == "" ]] ; then
+    echo '# [ERROR]: 1st arg must be a directory'
+    echo '###################################################'
     exit 1
 fi
+
+if [[ $2 -eq 0 ]] ; then
+    echo '# [ERROR]: 2nd arg must be color count, 32'
+    echo '###################################################'
+    exit 1
+fi
+
+################################################################################
+################################################################################
+# run image compression with ImageAlpha, then ImageOptim
 /Applications/ImageAlpha.app/Contents/MacOS/pngquant $2 --ext .png -f $1/*.png
+/Applications/ImageOptim.app/Contents/MacOS/ImageOptim $1/*.png
+
+################################################################################
+################################################################################
+# count successful optimizations
+numFiles="$(find $1 -maxdepth 1 -type f -name '*.png' | wc -l)"
+
+echo '###################################################'
+echo "# Results: ${numFiles} png files have been crushed"
+echo '###################################################'
