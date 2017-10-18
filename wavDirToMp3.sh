@@ -20,6 +20,7 @@ fi
 
 bitrate=320
 if [[ $2 -eq 0 ]] ; then
+    bitrate=320
 else
     bitrate=$2
 fi
