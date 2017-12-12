@@ -4,4 +4,4 @@
 
 filename=$1
 # lame --abr 320 --resample 44.1 --bitwidth 16 -q0 -a $filename ${filename/wav/mp3}
-lame --abr 96 --resample 44.1 --bitwidth 16 -q0 -a $filename ${file/wav/mp3}
+lame --abr 96 --resample 44.1 --bitwidth 16 -q0 -a "$filename" ${file/wav/mp3}

@@ -1,9 +1,9 @@
 #!/bin/bash
 echo '###################################################'
-echo '# Description: Resize an image to a maximum dimension'
-echo '# Usage: $ ./imageResizeToMaxDimension.sh /Absolute/image/file.jpg 640'
+echo '# Description: Compress a directory of image to jpg, with a specified quality'
+echo '# Usage: $ ./imageCompressToJpgDir.sh /path/to/images' 85
 echo '# Param 1: Image file'
-echo '# Param 2: Maximum width/height'
+echo '# Param 2: JPG quality (0-100)'
 echo '# Requires: Imagemagick'
 echo '###################################################'
 
@@ -16,13 +16,13 @@ green=`tput setaf 2`
 reset=`tput sgr0`
 
 if [[ $1 == "" ]] ; then
-    echo "# ${red}[ERROR]${reset}: 1st arg must be an image file"
+    echo "# ${red}[ERROR]${reset}: 1st arg must be an image"
     echo '###################################################'
     exit 1
 fi
 
 if [[ $2 -eq 0 ]] ; then
-    echo "# ${red}[ERROR]${reset}: 2nd arg must be maximum size"
+    echo "# ${red}[ERROR]${reset}: 2nd arg must be compression quality"
     echo '###################################################'
     exit 1
 fi
@@ -30,11 +30,12 @@ fi
 ################################################################################
 ################################################################################
 
-# resize with Imagemagick
-filename=$1
-extension="${filename##*.}"
-convert $1 -resize $2x$2 "$1.$2.$extension"
+for file in "$1"/*
+do
+  ./imageCompressToJpg.sh "$file" $2
+done
 
 echo '###################################################'
-echo "# Success: Image resized to max dimension of: ${green}$2${reset}"
+echo "# Success: Compressed files in $1"
 echo '###################################################'
+say Images compressed at $2 percent

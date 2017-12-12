@@ -1,28 +1,17 @@
 #!/bin/bash
+
 echo '###################################################'
-echo '# Description: Resize an image to a maximum dimension'
-echo '# Usage: $ ./imageResizeToMaxDimension.sh /Absolute/image/file.jpg 640'
-echo '# Param 1: Image file'
-echo '# Param 2: Maximum width/height'
+echo '# Description: Crops directory of images to remove transparent pixels'
+echo '# Usage: $ $ ./imageCropTransparentPixelsDir.sh /path/to/files'
+echo '# Param 1: Directory of images'
 echo '# Requires: Imagemagick'
 echo '###################################################'
 
 ################################################################################
 ################################################################################
 # check parameters
-
-red=`tput setaf 1`
-green=`tput setaf 2`
-reset=`tput sgr0`
-
 if [[ $1 == "" ]] ; then
-    echo "# ${red}[ERROR]${reset}: 1st arg must be an image file"
-    echo '###################################################'
-    exit 1
-fi
-
-if [[ $2 -eq 0 ]] ; then
-    echo "# ${red}[ERROR]${reset}: 2nd arg must be maximum size"
+    echo '# [ERROR]: 1st arg must be a directory'
     echo '###################################################'
     exit 1
 fi
@@ -30,11 +19,11 @@ fi
 ################################################################################
 ################################################################################
 
-# resize with Imagemagick
-filename=$1
-extension="${filename##*.}"
-convert $1 -resize $2x$2 "$1.$2.$extension"
+for file in "$1"/*
+do
+  ./imageCropTransparentPixels.sh "$file"
+done
 
 echo '###################################################'
-echo "# Success: Image resized to max dimension of: ${green}$2${reset}"
+echo "# Success: Renamed files in $1"
 echo '###################################################'

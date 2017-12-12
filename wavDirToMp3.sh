@@ -33,12 +33,14 @@ fi
 ################################################################################
 ################################################################################
 
-for file in $1/*wav
+for file in "$1"/*wav
 do
+  echo "# ./wavToMp3.sh $file $bitrate $mono"
   ./wavToMp3.sh "$file" $bitrate $mono
 done
-for file in $1/*aif
+for file in "$1"/*aif
 do
+  echo "# ./wavToMp3.sh $file $bitrate $mono"
   ./wavToMp3.sh "$file" $bitrate $mono
 done
 
