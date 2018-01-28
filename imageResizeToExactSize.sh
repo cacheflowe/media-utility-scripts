@@ -1,45 +1,47 @@
 #!/bin/bash
-# docs: http://lame.cvs.sourceforge.net/viewvc/lame/lame/USAGE
 echo '###################################################'
-echo '# Description: Convert a wav/aif file to mp3'
-echo '# Usage: $ ./wavToMp3.sh /path/to/file.wav [256] [1]'
-echo '# Param 1: Wav or Aif file'
-echo '# Param 2 [Optional]: Bitrate'
-echo '# Param 3 [Optional]: Channels'
-echo '# Requires: Lame'
+echo '# Description: Resize an image to a exact dimensions'
+echo '# Usage: $ ./imageResizeToExactSize.sh /Absolute/image/file.jpg 1024 512'
+echo '# Param 1: Image file'
+echo '# Param 2: Width'
+echo '# Param 3: Height'
+echo '# Requires: Imagemagick'
 echo '###################################################'
 
 ################################################################################
 ################################################################################
 # check parameters
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+
 if [[ $1 == "" ]] ; then
-    echo '# [ERROR]: 1st arg must be a wav or aif file'
+    echo "# ${red}[ERROR]${reset}: 1st arg must be an image file"
     echo '###################################################'
     exit 1
 fi
 
-bitrate=320
 if [[ $2 -eq 0 ]] ; then
-    echo '# [Optional]: Using default bitrate of 320'
+    echo "# ${red}[ERROR]${reset}: 2nd arg must be width"
     echo '###################################################'
-else
-    bitrate=$2
+    exit 1
 fi
 
-mono=""
-if [[ $3 -eq 1 ]] ; then
-    mono="-m m"
-    echo '# [Optional]: Converting to mono'
+if [[ $3 -eq 0 ]] ; then
+    echo "# ${red}[ERROR]${reset}: 3rd arg must be height"
     echo '###################################################'
+    exit 1
 fi
 
 ################################################################################
 ################################################################################
 
+# resize with Imagemagick
 filename=$1
 extension="${filename##*.}"
-lame --abr $bitrate --resample 44.1 --bitwidth 16 $mono -q0 -a "$filename" "$1.mp3"
+convert $1 -resize $2x$3\! "$1.$2x$3.$extension"
 
 echo '###################################################'
-echo "# Success: Converted to 16/44.1 mp3"
+echo "# Success: Image resized to exact dimension of: ${green}$2x$3${reset}"
 echo '###################################################'
