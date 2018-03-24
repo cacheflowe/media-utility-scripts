@@ -8,4 +8,4 @@ extension="${filename##*.}"
 # h264: -c:v libx264
 # mpeg4: -c:v mpeg4
 
-ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3" -pix_fmt yuv420p -vcodec libx264 -qscale 0 -f mp4 "$filename.crop.mp4"
+ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3" -pix_fmt yuv420p -vcodec libx264 -crf 1 -f mp4 "$filename.crop.mp4"
