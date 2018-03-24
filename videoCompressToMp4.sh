@@ -1,30 +1,45 @@
 #!/bin/bash
 echo '###################################################'
 echo '# Description: Extract a poster frame from a video'
-echo '# Usage: $ ./videoCompressToMp4.sh /path/to/video.mov'
+echo '# Usage: $ ./videoCompressToMp4.sh /path/to/video.mov "-crf 24 -vf scale=1280:-1 -an"'
 echo '# Param 1: Video file'
 echo '# Requires: ffmpeg'
 echo '###################################################'
 
-# scale down: -vf "scale=960:-1"
+# SCALE TO WIDTH:
+# -vf "scale=960:-1"
+
+# FRAME RATE
 # frame rate: -r 30
 # frame rate: -r 60
-# Codec:
-# h264: -c:v libx264
-# mpeg4: -c:v mpeg4
-# -vcodec mpeg4
-# ffmpeg -y -i $1 -vcodec mpeg4 -b:v $2k -pix_fmt yuv420p -f mp4 -r 30 "$1.rate-$2.mp4"
-# start: -ss 2.3
-# end:   -to 4.3
-# ex:   -ss 0 -to 1.5
-# ffmpeg -y -i "$1" -vcodec mpeg4 -c:v libx264 -vf "scale=2688:-1" -b:v 50000 -pix_fmt yuv420p -f mp4 -r 30 "$1.mp4"
-# remove audio: -an
-# resize: -vf "scale=1280:-1"
-# quality (full): -q:v 1
-# quality (good): -q:v 5
-# quality (compressed): -q:v 12
-# effects: -vf eq=brightness=0.08:saturation=1.2:contrast=1.15
-# why?: -pix_fmt yuv420p
+
+# VIDEO CODEC / QUALITY
+# h264: -c:v libx264    -crf 1          not this: -q:v 0
+# mpeg4: -c:v mpeg4     -crf 1
+
+# TIME CROP:
+# start:    -ss 2.3
+# end:      -to 4.3
+# example:  -ss 0.5 -to 1.5
+
+# REMOVE AUDIO
+# -an
+
+# AUDIO CODEC
+# -c:a aac -b:a 128k -ac 2
+
+# EFFECTS 
+# -vf eq=brightness=0.08:saturation=1.2:contrast=1.15
+
+# MERGE AUDIO TO VIDEO FILE
+# %ffmpeg% -f concat -i _concat.txt -i %audioFile% -c:a aac -b:a 128k -ac 2 final-render\%sessionId%.mp4
+
+# CONCAT VIDEO FILES & ADD AUDIO
+# %ffmpeg% -f concat -i _concat.txt -i %audioFile% -c:a aac -b:a 128k -ac 2 final-render\%sessionId%.mp4
+
+# IMAGE SEQUENCE TO VIDEO (WINDOWS)
+# %ffmpeg% -r 30 -f image2 -i %%04d.tga -c:v libx264 -crf 16 -pix_fmt yuv420p -f mp4 ..\_frames-rendered.mp4
+
 
 ################################################################################
 ################################################################################
@@ -35,13 +50,13 @@ if [[ $1 == "" ]] ; then
     exit 1
 fi
 
-# extractTime=0
-# if [[ $2 -eq 0 ]] ; then
-#     echo "# [Optional]: Using default frametime of ${extractTime} seconds"
-#     echo '###################################################'
-# else
-#     extractTime=$2
-# fi
+customArgs="-crf 1 -an"
+if [[ $2 -eq 0 ]] ; then
+    echo "# [Optional]: Using default customArgs ${customArgs}"
+    echo '###################################################'
+else
+    customArgs=$2
+fi
 
 ################################################################################
 ################################################################################
@@ -52,7 +67,7 @@ echo "# $filename"
 echo "#####################################"
 filename=$1
 extension="${filename##*.}"
-ffmpeg -y -i "$filename" -vcodec libx264 -q:v 0 -pix_fmt yuv420p -f mp4 "$filename.mp4"
+ffmpeg -y -i "$filename" -vcodec libx264 -pix_fmt yuv420p -f mp4 $customArgs "$filename.compressed.mp4"
 # -an
 echo '###################################################'
 echo "# Success: Video Compressed:"
