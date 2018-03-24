@@ -16,4 +16,5 @@ echo "### Time cropping video from $2 to $3 at quality $4: $filename ###"
 echo "##########################################"
 # ffmpeg -y -i "$1" -vcodec mpeg4 -q:v $4 -vf "scale=1280:-1" -pix_fmt yuv420p -an -f mp4 -r 30 -ss $2 -to $3 "$1.crop.mp4"
 # or without re-encoding:
-ffmpeg -y -i "$1" -vcodec copy -an -ss $2 -to $3 "$1.crop.mp4"
+# ffmpeg -y -i "$1" -vcodec copy -an -ss $2 -to $3 "$1.crop.mp4"
+ffmpeg -y -i "$1" -vcodec libx264 -crf 1 -pix_fmt yuv420p -an -f mp4 -ss $2 -to $3 "$1.crop.mp4"
