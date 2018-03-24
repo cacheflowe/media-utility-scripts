@@ -28,7 +28,7 @@ fi
 
 mono=""
 if [[ $3 -eq 1 ]] ; then
-    mono="-m m"
+    mono="-a"
     echo '# [Optional]: Converting to mono'
     echo '###################################################'
 fi
@@ -38,7 +38,7 @@ fi
 
 filename=$1
 extension="${filename##*.}"
-lame --abr $bitrate --resample 44.1 --bitwidth 16 $mono -q0 -a "$filename" "$1.mp3"
+lame --abr $bitrate --resample 44.1 --bitwidth 16 $mono -q0 "$filename" "$1.mp3"
 
 echo '###################################################'
 echo "# Success: Converted to 16/44.1 mp3"
