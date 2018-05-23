@@ -1,4 +1,5 @@
 #!/bin/bash
+source @includes.sh
 echo '###################################################'
 echo '# Description: Extract a poster frame from a video'
 echo '# Usage: $ ./videoToImagePoster.sh /path/to/video.mov 2.0'
@@ -6,38 +7,35 @@ echo '# Param 1: Video file'
 echo '# Param 2 [Optional]: Time in seconds'
 echo '# Requires: ffmpeg'
 echo '###################################################'
+echoNewline
 
 ################################################################################
 ################################################################################
 # check parameters & set defaults
 if [[ $1 == "" ]] ; then
-    echo '# [ERROR]: 1st arg must be a video file'
-    echo '###################################################'
+    echoError '1st arg must be a video file'
     exit 1
 fi
 
 extractTime=0
 if [[ $2 -eq 0 ]] ; then
-    echo "# [Optional]: Using default frametime of ${extractTime} seconds"
-    echo '###################################################'
+    echoInfo "[Optional]: Using default frametime of ${extractTime} seconds"
 else
     extractTime=$2
 fi
 
 ################################################################################
 ################################################################################
+# do conversion
 
-# $1 is file
-# $2 is time in seconds
-file=$1
-echo "#####################################"
-echo "# Saving thumbnail for movie:"
-echo "# $file.jpg"
-echo "#####################################"
-extension="${1##*.}"
-ffmpeg -ss $extractTime -i $file -t 1 -qscale 0 -f image2 "$file.jpg"
+filename=$1
+extension=$(extension $filename)
+outputFile="$filename.jpg"
+echoInfo "Saving thumbnail for movie: $filename"
+ffmpeg -ss $extractTime -i $filename -t 1 -qscale 0 -f image2 "$outputFile"
 
-echo '###################################################'
-echo "# Success: Extract frame at $extractTime seconds:"
-echo "# $file.jpg"
-echo '###################################################'
+################################################################################
+################################################################################
+# complete
+
+echoSuccess "Extracted poster frame at $extractTime seconds: \n# $outputFile"

@@ -1,33 +1,34 @@
 #!/bin/bash
+source @includes.sh
 echo '###################################################'
 echo '# Description: Crops an image to remove transparent pixels'
 echo '# Usage: $ ./imageCropTransparentPixels.sh /path/to/image.png'
 echo '# Param 1: Image file'
 echo '# Requires: Imagemagick'
 echo '###################################################'
+echoNewline
 
 ################################################################################
 ################################################################################
 # check parameters
 
-red=`tput setaf 1`
-green=`tput setaf 2`
-reset=`tput sgr0`
-
 if [[ $1 == "" ]] ; then
-    echo "# ${red}[ERROR]${reset}: 1st arg must be an image"
-    echo '###################################################'
+    echoError "1st arg must be an image"
     exit 1
 fi
 
 ################################################################################
 ################################################################################
+# do conversion
 
 filename=$1
-extension="${filename##*.}"
+extension=$(extension $filename)
+echoInfo "Cropping image: $filename"
 convert "$1" -trim "$1.crop.$extension"
 
-echo '###################################################'
-echo "# Success: Cropped file: $1"
-echo '###################################################'
+################################################################################
+################################################################################
+# complete
+
+echoSuccess "Cropped file: $1"
 say Image cropped

@@ -1,5 +1,6 @@
 #!/bin/bash
 # docs: http://lame.cvs.sourceforge.net/viewvc/lame/lame/USAGE
+source @includes.sh
 echo '###################################################'
 echo '# Description: Convert a directory of wav/aif files to mp3'
 echo '# Usage: $ $ ./wavDirToMp3.sh /path/to/file.wav [256] [1]'
@@ -8,6 +9,7 @@ echo '# Param 2 [Optional]: Bitrate'
 echo '# Param 3 [Optional]: Channels'
 echo '# Requires: Lame'
 echo '###################################################'
+echoNewline
 
 ################################################################################
 ################################################################################
@@ -32,18 +34,17 @@ fi
 
 ################################################################################
 ################################################################################
+# convert files
 
-for file in "$1"/*wav
+for file in "$1"/*.{wav,aif,mp3}
 do
-  echo "# ./wavToMp3.sh $file $bitrate $mono"
-  ./wavToMp3.sh "$file" $bitrate $mono
-done
-for file in "$1"/*aif
-do
-  echo "# ./wavToMp3.sh $file $bitrate $mono"
-  ./wavToMp3.sh "$file" $bitrate $mono
+  if [ -f $file ]; then
+    ./wavToMp3.sh "$file" $bitrate $mono
+  fi
 done
 
-echo '###################################################'
-echo "# Success: Converted directory 16/44.1 mp3"
-echo '###################################################'
+################################################################################
+################################################################################
+# complete
+
+echoSuccess "Converted directory 16/44.1 mp3"

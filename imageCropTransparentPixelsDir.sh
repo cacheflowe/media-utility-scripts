@@ -1,29 +1,34 @@
 #!/bin/bash
-
+source @includes.sh
 echo '###################################################'
 echo '# Description: Crops directory of images to remove transparent pixels'
 echo '# Usage: $ $ ./imageCropTransparentPixelsDir.sh /path/to/files'
 echo '# Param 1: Directory of images'
 echo '# Requires: Imagemagick'
 echo '###################################################'
+echoNewline
 
 ################################################################################
 ################################################################################
 # check parameters
 if [[ $1 == "" ]] ; then
-    echo '# [ERROR]: 1st arg must be a directory'
-    echo '###################################################'
+    echoError '1st arg must be a directory'
     exit 1
 fi
 
 ################################################################################
 ################################################################################
+# do conversion
 
-for file in "$1"/*
+for file in "$1"/*png
 do
-  ./imageCropTransparentPixels.sh "$file"
+  if [ -f $file ]; then
+    ./imageCropTransparentPixels.sh "$file"
+  fi
 done
 
-echo '###################################################'
-echo "# Success: Renamed files in $1"
-echo '###################################################'
+################################################################################
+################################################################################
+# complete
+
+echoSuccess "Cropped files in $1"

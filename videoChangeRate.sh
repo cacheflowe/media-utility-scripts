@@ -1,12 +1,11 @@
 #!/bin/bash
 source @includes.sh
 echo '###################################################'
-echo '# Description: Resize an image to a exact dimensions'
-echo '# Usage: $ ./imageResizeToExactSize.sh /Absolute/image/file.jpg 1024 512'
-echo '# Param 1: Image file'
-echo '# Param 2: Width'
-echo '# Param 3: Height'
-echo '# Requires: Imagemagick'
+echo '# Description: Change the speed of a video file'
+echo '# Usage: $ ./videoChangeRate.sh /Absolute/video.mov 1.5'
+echo '# Param 1: Video file'
+echo '# Param 2: New rate time multiplier (0.5 is 2x as fast)'
+echo '# Requires: ffmpeg'
 echo '###################################################'
 echoNewline
 
@@ -15,17 +14,12 @@ echoNewline
 # check parameters
 
 if [[ $1 == "" ]] ; then
-  echoError '1st arg must be an image file'
+  echoError '1st arg must be a video file'
   exit 1
 fi
 
 if [[ $2 -eq 0 ]] ; then
-  echoError '2nd arg must be width'
-  exit 1
-fi
-
-if [[ $3 -eq 0 ]] ; then
-  echoError '3rd arg must be height'
+  echoError '2nd arg must be new rate'
   exit 1
 fi
 
@@ -35,12 +29,13 @@ fi
 
 filename=$1
 extension=$(extension $filename)
-echoInfo "Resizing image: $filename"
-outputFile="$1.$2x$3.$extension"
-convert $1 -resize $2x$3\! $outputFile
+outputFile="$filename.rate-$2.$extension"
+echoInfo "Altering video: $filename"
+ffmpeg -i $filename -filter:v "setpts=$2*PTS" -filter:a "atempo=1.0/$2" -vcodec libx264 -crf 1 -pix_fmt yuv420p -f mp4 $outputFile
+# ffmpeg -r 60 -i 001.mov -filter:v "setpts=0.25*PTS,transpose=0" -filter:a "atempo=2.0,atempo=2.0" -r 30 001.portrait.mp4
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Success: Image resized to exact dimension of: $2x$3 \n# $outputFile"
+echoSuccess "Video rate changed: \n# $outputFile"

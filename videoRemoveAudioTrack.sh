@@ -1,32 +1,33 @@
 #!/bin/bash
+source @includes.sh
 echo '###################################################'
 echo '# Description: Removes audio track from video'
 echo '# Usage: $ ./videoRemoveAudioTrack.sh /path/to/video.mov'
 echo '# Param 1: Video file'
 echo '# Requires: ffmpeg'
 echo '###################################################'
+echoNewline
 
 ################################################################################
 ################################################################################
 # check parameters
 
-red=`tput setaf 1`
-green=`tput setaf 2`
-reset=`tput sgr0`
-
 if [[ $1 == "" ]] ; then
-    echo "# ${red}[ERROR]${reset}: 1st arg must be a video"
-    echo '###################################################'
+    echoError "1st arg must be a video"
     exit 1
 fi
 
 ################################################################################
 ################################################################################
+# do conversion
 
 filename=$1
-extension="${filename##*.}"
-ffmpeg -i $filename -vcodec copy -an "$filename.noaudio.$extension"
+extension=$(extension $filename)
+outputFile="$filename.noaudio.$extension"
+ffmpeg -i $filename -vcodec copy -an $outputFile
 
-echo '###################################################'
-echo "# Success: Removed audio from: $1"
-echo '###################################################'
+################################################################################
+################################################################################
+# complete
+
+echoSuccess "Removed audio from video: $outputFile"

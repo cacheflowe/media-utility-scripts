@@ -1,28 +1,46 @@
 #!/bin/bash
 source @includes.sh
 echo '###################################################'
-echo '# Description: Extract image sequence from a video'
-echo '# Usage: $ ./videoToImageSequence.sh /path/to/video.mov [jpg]'
+echo '# Description: Crops a portion of a video'
+echo '# Usage: $ ./videoCropDimensions.sh /path/to/video.mov 10 10 200 200'
 echo '# Param 1: Video file'
-echo '# Param 2 [Optional]: Output file format [jpg]'
+echo '# Param 2: x'
+echo '# Param 3: y'
+echo '# Param 4: width'
+echo '# Param 5: height'
 echo '# Requires: ffmpeg'
 echo '###################################################'
 echoNewline
 
 ################################################################################
 ################################################################################
-# check parameters & set defaults
+# check parameters
+
 if [[ $1 == "" ]] ; then
     echoError '1st arg must be a video file'
     exit 1
 fi
 
-outputFormat="png"
 if [[ $2 == "" ]] ; then
-    echoInfo "[Optional]: Using default image format of $outputFormat"
-else
-    outputFormat=$2
+    echoError '2nd arg must be a crop x'
+    exit 1
 fi
+
+if [[ $3 == "" ]] ; then
+    echoError '3rd arg must be a crop y'
+    exit 1
+fi
+
+if [[ $4 == "" ]] ; then
+    echoError '4th arg must be a crop width'
+    exit 1
+fi
+
+if [[ $5 == "" ]] ; then
+    echoError '5th arg must be a crop height'
+    exit 1
+fi
+
 
 ################################################################################
 ################################################################################
@@ -30,21 +48,12 @@ fi
 
 filename=$1
 extension=$(extension $filename)
-echoInfo "Saving images from video: $filename"
-# create output directory
-newDir="$filename-frames"
-mkdir $newDir
-echoInfo "Created directory: $newDir"
-# convert files
-if [ $outputFormat = "jpg" ]; then
-  # jpeg quality info: http://stackoverflow.com/questions/10225403/how-can-i-extract-a-good-quality-jpeg-image-from-an-h264-video-file-with-ffmpeg
-  ffmpeg -i $filename -qscale:v 1 $newDir/ffout%08d.jpg
-else
-  ffmpeg -i $filename $newDir/ffout%08d.png
-fi
+outputFile="$filename.crop.x$2.y$3.w$4.h$5.mp4"
+echoInfo "Cropping video: $filename"
+ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3" -pix_fmt yuv420p -vcodec libx264 -crf 1 -f mp4 "$outputFile"
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Extracted video frames: \n# $newDir"
+echoSuccess "Video cropped: $filename.mp4"
