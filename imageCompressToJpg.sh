@@ -2,7 +2,7 @@
 source @includes.sh
 echo '###################################################'
 echo '# Description: Compress an image to jpg, with a specified quality'
-echo '# Usage: $ ./imageCompressToJpg.sh /path/to/image.png' 85
+echo '# Usage: $ ./imageCompressToJpg.sh /path/to/image.png 85'
 echo '# Param 1: Image file'
 echo '# Param 2: JPG quality (0-100)'
 echo '# Requires: Imagemagick'

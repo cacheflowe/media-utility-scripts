@@ -1,41 +1,42 @@
 #!/bin/bash
+source @includes.sh
 echo '###################################################'
-echo '# Description: Compress a directory of image to jpg, with a specified quality'
-echo '# Usage: $ ./imageCompressToJpgDir.sh /path/to/images' 85
+echo '# Description: Compress a directory of image to jpg with a specified quality'
+echo '# Usage: $ ./imageCompressToJpgDir.sh /path/to/images 85'
 echo '# Param 1: Image file'
 echo '# Param 2: JPG quality (0-100)'
 echo '# Requires: Imagemagick'
 echo '###################################################'
+echoNewline
 
 ################################################################################
 ################################################################################
 # check parameters
 
-red=`tput setaf 1`
-green=`tput setaf 2`
-reset=`tput sgr0`
-
 if [[ $1 == "" ]] ; then
-    echo "# ${red}[ERROR]${reset}: 1st arg must be an image"
-    echo '###################################################'
+    echoError "1st arg must be an image"
     exit 1
 fi
 
 if [[ $2 -eq 0 ]] ; then
-    echo "# ${red}[ERROR]${reset}: 2nd arg must be compression quality"
-    echo '###################################################'
+    echoError "2nd arg must be compression quality"
     exit 1
 fi
 
 ################################################################################
 ################################################################################
+# do conversion
 
-for file in "$1"/*
+for file in "$1"/*.{png,jpg,jpeg,gif}
 do
-  ./imageCompressToJpg.sh "$file" $2
+  if [ -f $file ]; then
+    ./imageCompressToJpg.sh "$file" $2
+  fi
 done
 
-echo '###################################################'
-echo "# Success: Compressed files in $1"
-echo '###################################################'
+################################################################################
+################################################################################
+# complete
+
+echoSuccess "Compressed files in $1"
 say Images compressed at $2 percent
