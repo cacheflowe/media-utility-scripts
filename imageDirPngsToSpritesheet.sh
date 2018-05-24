@@ -11,30 +11,25 @@ echo '###################################################'
 ################################################################################
 # check parameters
 
-red=`tput setaf 1`
-green=`tput setaf 2`
-reset=`tput sgr0`
-
 if [[ $1 == "" ]] ; then
-    echo "# ${red}[ERROR]${reset}: 1st arg must be an image"
-    echo '###################################################'
+    echoError "1st arg must be an image"
     exit 1
 fi
 
 if [[ $2 == "" ]] ; then
-    echo "# ${red}[ERROR]${reset}: 2nd arg must be number of spritesheet rows"
-    echo '###################################################'
+    echoError "2nd arg must be number of spritesheet rows"
     exit 1
 fi
 
 ################################################################################
 ################################################################################
 
-filename=$1
-extension="${filename##*.}"
-montage $1/*.png -tile 1x$2 -geometry +0+2 -background none $1/_tiles.png
+# get filename
+imgDir=$1
+outputFile="$imgDir/_tiles.png"
 
-echo '###################################################'
-echo "# Success: Spritesheet created: $1"
-echo '###################################################'
+# do conversion
+montage $imgDir/*.png -tile 1x$2 -geometry +0+2 -background none $outputFile
+
+echoSuccess "Spritesheet created: $outputFile"
 say Spritesheet created

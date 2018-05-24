@@ -44,12 +44,14 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 outputFile="$filename.crop.x$2.y$3.w$4.h$5.mp4"
 echoInfo "Cropping video: $filename"
+
+# do conversion
 ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3" -pix_fmt yuv420p -vcodec libx264 -crf 1 -f mp4 "$outputFile"
 
 ################################################################################

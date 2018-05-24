@@ -31,12 +31,14 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 echoInfo "Cropping image: $filename"
 outputFile="$filename.crop$2x$3.$extension"
+
+# do conversion
 convert $filename -gravity Center -crop $2x$3+0+0 +repage "$outputFile"
 
 ################################################################################

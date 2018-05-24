@@ -15,8 +15,7 @@ echoNewline
 ################################################################################
 # check parameters
 if [[ $1 == "" ]] ; then
-    echo '# [ERROR]: 1st arg must be a wav or aif file'
-    echo '###################################################'
+    echoError '1st arg must be a wav or aif directory'
     exit 1
 fi
 
@@ -34,8 +33,8 @@ fi
 
 ################################################################################
 ################################################################################
-# convert files
 
+# loop through files
 for file in "$1"/*.{wav,aif,mp3}
 do
   if [ -f $file ]; then

@@ -25,15 +25,18 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension="${filename##*.}"
-convert "$1" -sampling-factor 4:2:0 -strip -quality $2 -interlace JPEG -colorspace RGB "$1.compressed.$2.jpg"
+outputFile="$1.compressed.$2.jpg"
+
+# do conversion
+convert "$1" -sampling-factor 4:2:0 -strip -quality $2 -interlace JPEG -colorspace RGB "$outputFile"
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Compressed jpg at $2% quality: $1"
+echoSuccess "Compressed jpg at $2% quality: $outputFile"
 # say Image compressed at $2 percent

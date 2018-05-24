@@ -19,11 +19,13 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 outputFile="$filename.normalized.wav"
+
+# do conversion
 ffmpeg -i $filename -af aformat=s16:44100 "$outputFile"
 
 ################################################################################

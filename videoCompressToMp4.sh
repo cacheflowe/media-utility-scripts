@@ -66,19 +66,20 @@ fi
 customArgs="-crf 1 -an"
 if [[ $2 -eq 0 ]] ; then
     echoInfo "[Optional]: Using default customArgs ${customArgs}"
-    echoDivider
 else
     customArgs=$2
 fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 outputFile="$filename.compressed.mp4"
 echoInfo "Compressing video: $filename"
+
+# do conversion
 ffmpeg -y -i "$filename" -vcodec libx264 -pix_fmt yuv420p -f mp4 $customArgs $outputFile
 
 ################################################################################

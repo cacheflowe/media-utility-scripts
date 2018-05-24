@@ -31,12 +31,14 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 echoInfo "Resizing image: $filename"
 outputFile="$1.$2x$3.$extension"
+
+# do conversion
 convert $1 -resize $2x$3\! $outputFile
 
 ################################################################################

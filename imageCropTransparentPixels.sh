@@ -19,16 +19,19 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
+outputFile="$1.crop.$extension"
 echoInfo "Cropping image: $filename"
-convert "$1" -trim "$1.crop.$extension"
+
+# do conversion
+convert "$filename" -trim "$outputFile"
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Cropped file: $1"
+echoSuccess "Cropped file: $outputFile"
 say Image cropped

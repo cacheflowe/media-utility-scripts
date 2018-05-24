@@ -35,10 +35,12 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 outputFile="$1.$2w.$fps-fps.gif"
 echoInfo "Converting $outputFile"
+
+# do conversion
 palette="./tmp/palette.png"
 filters="fps=$fps,scale=$2:-1:flags=lanczos"
 echoInfo $filters

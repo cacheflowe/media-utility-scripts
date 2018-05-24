@@ -9,18 +9,20 @@ echo '###################################################'
 ################################################################################
 # check parameters
 if [[ $1 == "" ]] ; then
-    echo '# [ERROR]: 1st arg must be a directory'
-    echo '###################################################'
+    echoError '1st arg must be a directory'
     exit 1
 fi
 
 ################################################################################
 ################################################################################
+
+# get filename
 files="$1/*png"
 dir=$1
-echo "# Running on $dir"
-mogrify -background black -flatten "$files"
+echoInfo "Running on $dir"
 
+# do conversion
+mogrify -background black -flatten "$files"
 
 ################################################################################
 ################################################################################
@@ -29,6 +31,8 @@ mogrify -background black -flatten "$files"
 # echo $cmd
 # numFiles="$($cmd | wc -l)"
 
-# echo '###################################################'
-echo "# Result: png files have been given a black background"
-echo '###################################################'
+################################################################################
+################################################################################
+# complete
+
+echoSuccess "png files have been given a black background"

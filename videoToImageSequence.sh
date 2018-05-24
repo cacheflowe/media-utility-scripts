@@ -26,16 +26,18 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 echoInfo "Saving images from video: $filename"
+
 # create output directory
 newDir="$filename-frames"
 mkdir $newDir
 echoInfo "Created directory: $newDir"
-# convert files
+
+# do conversion
 if [ $outputFormat = "jpg" ]; then
   # jpeg quality info: http://stackoverflow.com/questions/10225403/how-can-i-extract-a-good-quality-jpeg-image-from-an-h264-video-file-with-ffmpeg
   ffmpeg -i $filename -qscale:v 1 $newDir/ffout%08d.jpg

@@ -19,11 +19,13 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 outputFile="$filename.noaudio.$extension"
+
+# do conversion
 ffmpeg -i $filename -vcodec copy -an $outputFile
 
 ################################################################################

@@ -25,12 +25,14 @@ fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 outputFile="$filename.rate-$2.$extension"
-echoInfo "Altering video: $filename"
+echoInfo "Changing video rate: $filename"
+
+# do conversion
 ffmpeg -i $filename -filter:v "setpts=$2*PTS" -filter:a "atempo=1.0/$2" -vcodec libx264 -crf 1 -pix_fmt yuv420p -f mp4 $outputFile
 # ffmpeg -r 60 -i 001.mov -filter:v "setpts=0.25*PTS,transpose=0" -filter:a "atempo=2.0,atempo=2.0" -r 30 001.portrait.mp4
 

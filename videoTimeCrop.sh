@@ -33,19 +33,20 @@ fi
 customArgs="-crf 1"
 if [[ $4 -eq 0 ]] ; then
   echoInfo "[Optional]: Using default customArgs ${customArgs}"
-  echoDivider
 else
   customArgs=$4
 fi
 
 ################################################################################
 ################################################################################
-# do conversion
 
+# get filename
 filename=$1
 extension=$(extension $filename)
 outputFile="$1.crop.$2-$3s.mp4"
 echoInfo "Time cropping video from $2 to $3 at quality $4: $filename ###"
+
+# do conversion
 ffmpeg -y -i "$filename" -vcodec libx264 $customArgs -pix_fmt yuv420p -f mp4 -ss $2 -to $3 "$outputFile"
 
 ################################################################################
