@@ -4,6 +4,7 @@ echo '###################################################'
 echo '# Description: Extract a poster frame from a video'
 echo '# Usage: $ ./videoCompressToMp4.sh /path/to/video.mov "-crf 24 -vf scale=1280:-1 -an"'
 echo '# Param 1: Video file'
+echo '# Param 2 [Optional]: Custom args'
 echo '# Requires: ffmpeg'
 echo '###################################################'
 echoNewline

@@ -2,10 +2,11 @@
 source @includes.sh
 echo '###################################################'
 echo '# Description: Extract a time segment of a video to a new file'
-echo '# Usage: $ ./videoTimeCrop.sh /Absolute/video.mov 10 15'
+echo '# Usage: $ ./videoTimeCrop.sh /Absolute/video/path.mov 10 15 ["-crf 24 -vf scale=800:-1 -an"]'
 echo '# Param 1: Video file'
 echo '# Param 2: Start time'
 echo '# Param 3: End time'
+echo '# Param 4 [Optional]: Custom args'
 echo '# Requires: ffmpeg'
 echo '###################################################'
 echoNewline
@@ -29,6 +30,14 @@ if [[ $3 -eq 0 ]] ; then
   exit 1
 fi
 
+customArgs="-crf 1"
+if [[ $4 -eq 0 ]] ; then
+  echoInfo "[Optional]: Using default customArgs ${customArgs}"
+  echoDivider
+else
+  customArgs=$4
+fi
+
 ################################################################################
 ################################################################################
 # do conversion
@@ -37,7 +46,7 @@ filename=$1
 extension=$(extension $filename)
 outputFile="$1.crop.$2-$3s.mp4"
 echoInfo "Time cropping video from $2 to $3 at quality $4: $filename ###"
-ffmpeg -y -i "$filename" -vcodec libx264 -crf 1 -pix_fmt yuv420p -f mp4 -ss $2 -to $3 "$outputFile"
+ffmpeg -y -i "$filename" -vcodec libx264 $customArgs -pix_fmt yuv420p -f mp4 -ss $2 -to $3 "$outputFile"
 
 ################################################################################
 ################################################################################
