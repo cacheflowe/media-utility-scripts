@@ -30,7 +30,7 @@ fi
 # get filename
 filename=$1
 extension=$(extension $filename)
-outputFile="$filename.jpg"
+outputFile="$filename.$extractTime.jpg"
 echoInfo "Saving thumbnail for movie: $filename"
 
 # do conversion
