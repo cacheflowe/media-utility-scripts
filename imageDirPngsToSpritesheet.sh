@@ -12,7 +12,7 @@ echo '###################################################'
 # check parameters
 
 if [[ $1 == "" ]] ; then
-    echoError "1st arg must be an image"
+    echoError "1st arg must be an image directory"
     exit 1
 fi
 

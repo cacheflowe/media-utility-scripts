@@ -10,6 +10,7 @@ These scripts depend on the following libraries, which can be easily installed w
 * imagemagick
 * gifsicle
 * LAME
+* SoX
 * [ImageAlpha](https://pngmini.com/)
 
 ## Setup

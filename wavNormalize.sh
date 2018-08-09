@@ -1,10 +1,10 @@
 #!/bin/bash
 source @includes.sh
 echo '###################################################'
-echo '# Description: Normalizes an audio file directory to wav'
-echo '# Usage: $ ./wavNormalizeTo16-44.sh /path/to/audio/files/'
-echo '# Param 1: Audio file directory'
-echo '# Requires: ffmpeg'
+echo '# Description: Normalizes a wav file'
+echo '# Usage: $ ./wavNormalize.sh /path/to/audio.wav [-3]'
+echo '# Param 1: Audio file'
+echo '# Requires: SoX'
 echo '###################################################'
 echoNewline
 
@@ -13,23 +13,31 @@ echoNewline
 # check parameters
 
 if [[ $1 == "" ]] ; then
-    echoError "1st arg must be a path of audio files"
+    echoError "1st arg must be an audio file"
     exit 1
+fi
+
+gain=0
+if [[ $2 -eq 0 ]] ; then
+  echoInfo "[Optional]: Using default gain of $gain"
+else
+  gain=$2
 fi
 
 ################################################################################
 ################################################################################
 
-# loop through files
-for file in "$1"/*.{wav,aif,mp3}
-do
-  if [ -f $file ]; then
-    ./wavNormalizeTo16-44.sh "$file"
-  fi
-done
+# get filename
+filename=$1
+extension=$(extension $filename)
+outputFile="$filename.normalized.$extension"
+echoInfo "Normalizing audio: $filename"
+
+# do conversion
+sox $filename "$outputFile" norm $gain 
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Normalized audio files to 16/44.1 wav"
+echoSuccess "Normalized: $outputFile"
