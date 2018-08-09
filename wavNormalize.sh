@@ -4,6 +4,7 @@ echo '###################################################'
 echo '# Description: Normalizes a wav file'
 echo '# Usage: $ ./wavNormalize.sh /path/to/audio.wav [-3]'
 echo '# Param 1: Audio file'
+echo '# Param 2 [Optional: db to normalize to (0 is max volume)'
 echo '# Requires: SoX'
 echo '###################################################'
 echoNewline
