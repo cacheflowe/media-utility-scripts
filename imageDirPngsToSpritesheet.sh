@@ -1,4 +1,5 @@
 #!/bin/bash
+source @includes.sh
 echo '###################################################'
 echo '# Description: Creates a single-column spritesheet out of a directory of png files'
 echo '# Usage: $ ./imageDirPngsToSpritesheet.sh /path/to/images'
@@ -6,6 +7,7 @@ echo '# Param 1: Image directory'
 echo '# Param 2: Number of rows'
 echo '# Requires: Imagemagick'
 echo '###################################################'
+echoNewline
 
 ################################################################################
 ################################################################################
