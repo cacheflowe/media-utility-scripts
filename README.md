@@ -27,10 +27,8 @@ In your shell, just put a `./` in front of the script name then provide paramete
 
 ## Windows Setup
 
-This is sketchy but I've had some success. If anything, most of these scripts have a single line that does the magic - this is more likely to succeed than running the whole script.
-
 * Get Ubuntu installed from the Windows Store. This requires enabling Windows Subsystem for Linux (WSL) from Turn Windows Features on/off in Control Panel
-* Open the Ubuntu app installed from the Store
+* Open the Ubuntu app installed from the Store or `CMD + R` and type `wsl`
 * Install Linuxbrew:
   * `sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"`
   * `PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"`
@@ -38,5 +36,9 @@ This is sketchy but I've had some success. If anything, most of these scripts ha
   * `brew install imagemagick`
   * `brew install ffmpeg`
   * `brew install gifsicle`
-* Find your C: drive:
-  * `cd /mnt/c`
+  * `brew install LAME`
+  * `brew install SoX`
+  * `brew install dos2unix`
+* Convert dos carriage returns to UNIX format with [dos2unix](https://askubuntu.com/questions/1071403/cannot-cd-or-change-directory-using-bash-script-in-wsl)
+* Find your C: drive and path to the scripts:
+  * `cd /mnt/c/files/media-utility-scripts`
