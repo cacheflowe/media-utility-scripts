@@ -8,6 +8,7 @@ echo '# Param 2: x'
 echo '# Param 3: y'
 echo '# Param 4: width'
 echo '# Param 5: height'
+echo '# Param 6 [Optional]: Custom args "-crf 1"'
 echo '# Requires: ffmpeg'
 echo '###################################################'
 echoNewline
@@ -41,6 +42,14 @@ if [[ $5 == "" ]] ; then
     exit 1
 fi
 
+customArgs="-crf 1"
+if [[ $6 -eq 0 ]] ; then
+  echoInfo "[Optional]: Using default customArgs ${customArgs}"
+else
+  customArgs=$6
+fi
+
+
 
 ################################################################################
 ################################################################################
@@ -52,7 +61,7 @@ outputFile="$filename.crop.x$2.y$3.w$4.h$5.mp4"
 echoInfo "Cropping video: $filename"
 
 # do conversion
-ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3" -pix_fmt yuv420p -vcodec libx264 -crf 1 -f mp4 "$outputFile"
+ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3" -pix_fmt yuv420p -vcodec libx264 $customArgs -f mp4 "$outputFile"
 
 ################################################################################
 ################################################################################

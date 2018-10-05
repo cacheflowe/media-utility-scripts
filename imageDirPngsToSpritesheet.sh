@@ -31,7 +31,7 @@ imgDir=$1
 outputFile="$imgDir/_tiles.png"
 
 # do conversion
-montage $imgDir/*.png -tile 1x$2 -geometry +0+2 -background none $outputFile
+montage $imgDir/*.png -tile 1x$2 -geometry +0+0 -background none $outputFile
 
 echoSuccess "Spritesheet created: $outputFile"
 # say Spritesheet created
