@@ -34,4 +34,4 @@ convert "$filename" -trim "$outputFile"
 # complete
 
 echoSuccess "Cropped file: $outputFile"
-say Image cropped
+# say Image cropped

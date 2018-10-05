@@ -5,7 +5,7 @@ echo '# Description: Compress an image to jpg, with a specified quality'
 echo '# Usage: $ ./imageCompressToJpg.sh /path/to/image.png 85'
 echo '# Param 1: Image file'
 echo '# Param 2: JPG quality (0-100)'
-echo '# Requires: Imagemagick'
+echo '# Requires: imagemagick, jpegoptim'
 echo '###################################################'
 echoNewline
 
@@ -33,6 +33,8 @@ outputFile="$1.compressed.$2.jpg"
 
 # do conversion
 convert "$1" -sampling-factor 4:2:0 -strip -quality $2 -interlace JPEG -colorspace RGB "$outputFile"
+# and do lossless compression
+jpegoptim "$outputFile"
 
 ################################################################################
 ################################################################################

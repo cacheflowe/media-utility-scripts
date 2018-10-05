@@ -4,10 +4,13 @@ Bash scripts for common conversion tasks on multimedia (video, image, audio) fil
 
 ## Prerequisites
 
-These scripts depend on the following libraries, which can be easily installed with [Homebrew](https://brew.sh/):
+These scripts depend on the following libraries, which can be easily installed with `apt` or [Homebrew](https://brew.sh/):
 
 * ffmpeg
 * imagemagick
+* pngquant
+* jpegoptim
+* optipng
 * gifsicle
 * LAME
 * SoX

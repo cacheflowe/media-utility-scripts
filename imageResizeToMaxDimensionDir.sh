@@ -39,4 +39,4 @@ done
 # complete
 
 echoSuccess "Success: Resized files in: $1"
-say Images resized
+# say Images resized

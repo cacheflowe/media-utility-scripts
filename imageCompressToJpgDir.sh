@@ -39,4 +39,4 @@ done
 # complete
 
 echoSuccess "Compressed files in $1"
-say Images compressed at $2 percent
+# say Images compressed at $2 percent

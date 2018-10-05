@@ -1,10 +1,11 @@
 #!/bin/bash
+source @includes.sh
 echo '###################################################'
 echo '# Description: Reduce png color pallette on a directory'
 echo '# Usage: $ ./pngCompressDir.sh /Absolute/image/dir/ 32'
 echo '# Param 1: Directory'
 echo '# Param 2: Number of colors'
-echo '# Requires: ImageAlpha, ImageOptim'
+echo '# Requires: pngquant, OptiPNG'
 echo '###################################################'
 
 ################################################################################
@@ -27,8 +28,9 @@ fi
 ################################################################################
 
 # run image compression with ImageAlpha, then ImageOptim
-/Applications/ImageAlpha.app/Contents/MacOS/pngquant colors --ext .png -f $1/*.png
-/Applications/ImageOptim.app/Contents/MacOS/ImageOptim $1/*.png
+pngquant $colors --ext .png -f $1/*.png
+# run lossless compression
+optipng $1/*.png
 
 ################################################################################
 ################################################################################
@@ -36,4 +38,4 @@ fi
 
 numFiles="$(find $1 -maxdepth 1 -type f -name '*.png' | wc -l)"
 echoSuccess "${numFiles} png files have been crushed"
-say Ping files crushed
+# say Ping files crushed

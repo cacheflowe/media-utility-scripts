@@ -34,4 +34,4 @@ outputFile="$imgDir/_tiles.png"
 montage $imgDir/*.png -tile 1x$2 -geometry +0+2 -background none $outputFile
 
 echoSuccess "Spritesheet created: $outputFile"
-say Spritesheet created
+# say Spritesheet created
