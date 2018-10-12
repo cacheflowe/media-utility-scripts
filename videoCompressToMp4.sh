@@ -20,8 +20,10 @@ echoNewline
 # frame rate: -r 60
 
 # VIDEO CODEC / QUALITY
-# h264: -c:v libx264    -crf 1          not this: -q:v 0
+# h264:  -c:v libx264    -crf 1          not this: -q:v 0
 # mpeg4: -c:v mpeg4     -crf 1
+# webm:  -c:v libvpx -c:a libvorbis
+# https://thethemefoundry.com/blog/convert-mp4-to-webm/
 
 # TIME CROP:
 # start:    -ss 2.3
