@@ -6,7 +6,7 @@ echo '# Usage: $ ./videoTimeCrop.sh /Absolute/video/path.mov 10 15 ["-crf 24 -vf
 echo '# Param 1: Video file'
 echo '# Param 2: Start time'
 echo '# Param 3: End time'
-echo '# Param 4 [Optional]: Custom args'
+echo '# Param 4 [Optional]: Custom args "-crf 1"'
 echo '# Requires: ffmpeg'
 echo '###################################################'
 echoNewline

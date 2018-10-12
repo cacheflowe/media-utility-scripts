@@ -26,9 +26,7 @@ echoInfo "Images to video: $filesDir"
 outputFile="$filesDir/_output.mp4"
 
 # do conversion
-ffmpeg -framerate 30 -pattern_type glob -i "$filesDir/*.png" -vcodec libx264 -crf 1 -pix_fmt yuv420p -f mp4 "$outputFile"
-# ffmpeg -framerate 10 -pattern_type glob -i '*.jpg' -c:v libx264 -pix_fmt yuv420p "$outputFile"
-# -f image2 
+ffmpeg -r 60 -f image2 -pattern_type glob -i "$filesDir/*.png" -vcodec libx264 -crf 1 -pix_fmt yuv420p -f mp4 "$outputFile"
 # On windows, glob might not work, so use this: `image2 -i %%04d.tga`
 
 ################################################################################
