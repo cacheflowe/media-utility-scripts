@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # http://blog.pkh.me/p/21-high-quality-gif-with-ffmpeg.html
 # be sure to create ./tmp/ directory to make it work
 source @includes.sh
