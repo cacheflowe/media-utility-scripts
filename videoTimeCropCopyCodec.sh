@@ -44,10 +44,10 @@ fi
 filename=$1
 extension=$(extension $filename)
 outputFile="$1.crop.$2-$3s.$extension"
-echoInfo "Time cropping video from $2 to $3 at quality $4: $filename ###"
+echoInfo "Time cropping video from $2 to $3 with customArgs $4: $filename ###"
 
 # do conversion
-ffmpeg -y -i "$filename" -vcodec copy -ss $2 -to $3 "$outputFile"
+ffmpeg -y -i "$filename" -vcodec copy -ss $2 -to $3 $customArgs "$outputFile"
 
 ################################################################################
 ################################################################################

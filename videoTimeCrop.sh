@@ -44,7 +44,7 @@ fi
 filename=$1
 extension=$(extension $filename)
 outputFile="$1.crop.$2-$3s.mp4"
-echoInfo "Time cropping video from $2 to $3 at quality $4: $filename ###"
+echoInfo "Time cropping video from $2 to $3 with customArgs $4: $filename ###"
 
 # do conversion
 ffmpeg -y -i "$filename" -vcodec libx264 $customArgs -pix_fmt yuv420p -f mp4 -ss $2 -to $3 "$outputFile"

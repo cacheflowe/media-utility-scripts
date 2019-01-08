@@ -30,7 +30,7 @@ fi
 for file in "$1"/*.{png,jpg,jpeg,gif}
 do
   if [ -f $file ]; then
-    ./imageResizeToMaxDimension.sh "$file" $2
+    imageResizeToMaxDimension.sh "$file" $2
   fi
 done
 

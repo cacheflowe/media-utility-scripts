@@ -1,31 +1,29 @@
 #!/bin/bash
 source @includes.sh
 echo '###################################################'
-echo '# Description: Rename files in a directory, replacing spaces with underscores'
-echo '# Usage: $ ./renameDirSpacesToUnderscores.sh /path/to/files'
-echo '# Param 1: Directory of files'
+echo '# Description: Rename a file or directory, replacing spaces with underscores'
+echo '# Usage: $ ./filesRenameSpacesToUnderscores.sh input with spaces.txt'
+echo '# Param 1: File or directory'
 echo '###################################################'
 echoNewline
 
 ################################################################################
-################################################################################
+###############################################################################
 # check parameters
 if [[ $1 == "" ]] ; then
-    echoError '1st arg must be a directory'
+    echoError '1st arg must be a file'
     exit 1
 fi
 
 ################################################################################
 ################################################################################
 
-# loop through files
-for file in "$1"/*
-do
-  ./renameFileSpacesToUnderscores.sh "$file"
-done
+# Replace spaces with underscores
+replaced=`echo "$1" | tr ' ' '_'`
+mv "$1" "$replaced";
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Renamed files in $1"
+echoSuccess "File renamed: $replaced"

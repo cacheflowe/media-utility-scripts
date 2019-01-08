@@ -70,6 +70,7 @@ if [[ $2 -eq 0 ]] ; then
     echoInfo "[Optional]: Using default customArgs ${customArgs}"
 else
     customArgs=$2
+    echoInfo "[Optional]: Using user-defined customArgs ${customArgs}"
 fi
 
 ################################################################################
