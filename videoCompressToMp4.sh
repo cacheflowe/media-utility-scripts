@@ -56,6 +56,8 @@ echoNewline
 # IMAGE SEQUENCE TO VIDEO (WINDOWS)
 # %ffmpeg% -r 30 -f image2 -i %%04d.tga -c:v libx264 -crf 16 -pix_fmt yuv420p -f mp4 ..\_frames-rendered.mp4
 
+# BLANK SPACE PADDING
+# -vf "pad=width=1800:height=1200:x=100:y=100:color=black"
 
 ################################################################################
 ################################################################################
