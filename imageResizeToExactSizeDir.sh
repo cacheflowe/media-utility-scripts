@@ -15,7 +15,7 @@ echoNewline
 # check parameters
 
 if [[ $1 == "" ]] ; then
-  echoError '1st arg must be an image file'
+  echoError '1st arg must be a directory'
   exit 1
 fi
 

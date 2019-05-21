@@ -1,11 +1,12 @@
 #!/bin/bash
 source @includes.sh
 echo '###################################################'
-echo '# Description: Copy a directory recursively & safely'
-echo '# Usage: $ ./directoryCopyRecursive.sh /path/to/copy/from /path/to/copy/to'
-echo '# Param 1: Copy path [from]'
-echo '# Param 2: Copy path [to]'
-echo '# Requires: rsync'
+echo '# Description: Search & replace strings in filenames within a directory'
+echo '# Usage: $ ./filesRenameSearchReplaceInDir.sh /some/files test hello'
+echo '# Param 1: Directory'
+echo '# Param 2: Search term'
+echo '# Param 3: Replacement string'
+echo '# Requires: Linux rename (might not exist on default OS X)'
 echo '###################################################'
 echoNewline
 
@@ -14,24 +15,28 @@ echoNewline
 # check parameters
 
 if [[ $1 == "" ]] ; then
-    echoError "1st arg must be a directory to copy from"
-    exit 1
+  echoError '1st arg must be a directory'
+  exit 1
 fi
 
-size=1
 if [[ $2 == "" ]] ; then
-  echoError "2nd arg must be a directory to copy to"
+  echoError '2nd arg must be search term'
+  exit 1
+fi
+
+if [[ $3 == "" ]] ; then
+  echoError '3rd arg must be replacement string'
   exit 1
 fi
 
 ################################################################################
 ################################################################################
 
-# do copy
-rsync -rltgoDv "$1" "$2"
+# update filenames
+rename $1 $2 $3/*
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Files copied!"
+echoSuccess "Images renamed in $1"
