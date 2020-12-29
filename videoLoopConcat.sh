@@ -37,8 +37,10 @@ echoInfo "Looping video $filename [$loops] times"
 
 # concat by building textfile
 concatFile="_list.txt"
-rm "$concatFile";
-for i in {1..2}; do printf "file '%s'\n" "$filename" >> "$concatFile"; done
+for (( c=1; c<=$loops; c++ ))
+do 
+  printf "file '%s'\n" "$filename" >> "$concatFile"
+done
 ffmpeg -f concat -i "$concatFile" -c copy "$outputFile"
 rm "$concatFile";
 
