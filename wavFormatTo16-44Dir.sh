@@ -24,7 +24,7 @@ fi
 for file in "$1"/*.{wav,aif,mp3}
 do
   if [ -f $file ]; then
-    ./wavNormalizeTo16-44.sh "$file"
+    wavFormatTo16-44.sh "$file"
   fi
 done
 

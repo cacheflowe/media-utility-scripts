@@ -25,7 +25,7 @@ filename=$1
 outputFile="$filename"
 
 # do conversion
-ffmpeg -y -i $filename -map_metadata -1 -codec copy "$outputFile"
+ffmpeg -y -i $filename -map_metadata -1 -vn -codec:a copy -write_xing 0 -id3v2_version 0 "$outputFile"
 
 ################################################################################
 ################################################################################

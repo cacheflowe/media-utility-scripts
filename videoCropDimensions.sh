@@ -49,6 +49,13 @@ else
   customArgs=$6
 fi
 
+extraVFArgs=""
+if [[ $6 -eq 0 ]] ; then
+  echoInfo "[Optional]: Using default extraVFArgs ${extraVFArgs}"
+else
+  extraVFArgs=$7
+fi
+
 
 
 ################################################################################
@@ -61,7 +68,7 @@ outputFile="$filename.crop.x$2.y$3.w$4.h$5.mp4"
 echoInfo "Cropping video: $filename"
 
 # do conversion
-ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3" -pix_fmt yuv420p -vcodec libx264 $customArgs -f mp4 "$outputFile"
+ffmpeg -i $filename -filter:v "crop=$4:$5:$2:$3 $extraVFArgs" -pix_fmt yuv420p -vcodec libx264 $customArgs -f mp4 "$outputFile"
 
 ################################################################################
 ################################################################################

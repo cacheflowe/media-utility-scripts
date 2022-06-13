@@ -4,6 +4,9 @@ echo '###################################################'
 echo '# Description: Resize an image to a maximum dimension'
 echo '# Usage: $ ./imageSequenceToMovie.sh /Absolute/image/files'
 echo '# Param 1: Image files directory'
+echo '# Param 2: -crf compression quality [1-24]'
+echo '# Param 3: filetype [png, jpg]'
+echo '# Param 4 [Optional]: framerate [1-60]'
 echo '# Requires: ffmpeg'
 echo '###################################################'
 echoNewline
@@ -17,17 +20,45 @@ if [[ $1 == "" ]] ; then
   exit 1
 fi
 
+if [[ $2 == "" ]] ; then
+  echoError "2nd arg must be crf: 1-24 if best to worst compression"
+  exit 1
+fi
+
+if [[ $3 == "" ]] ; then
+  echoError "3nd arg must be image filetype: jpg, png, tga, etc"
+  exit 1
+fi
+
+fps="60"
+if [[ $4 == "" ]] ; then
+    echoInfo "[Optional]: Using default fps ${fps}"
+else
+    fps=$4
+    echoInfo "[Optional]: Using user-defined fps ${fps}"
+fi
+
+
 ################################################################################
 ################################################################################
 
 # get filename
 filesDir=$1
 echoInfo "Images to video: $filesDir"
-outputFile="$filesDir/_output.mp4"
+dirLastEl="$(basename $filesDir)"
+curDirName=${PWD##*/}
+outputFile="$filesDir/_$curDirName.mp4"
+outputFile="$filesDir/../../Content_Equirect/$curDirName.mp4"
+quality="-crf $2"
+quality="-b:v 30M"
 
 # do conversion
+addAllKeyframes="-x264-params keyint=1:scenecut=0"
+formatMp4="-vcodec libx264 -pix_fmt yuvj420p -f mp4"
+temporalSmoothing="-vf minterpolate='fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1'"
+temporalSmoothing="-vf minterpolate='mi_mode=2'"
 # -vf scale=3840:-1
-ffmpeg -r 60 -f image2 -pattern_type glob -i "$filesDir/*.png" -an -vcodec libx264 -crf 1 -pix_fmt yuv420p -f mp4 "$outputFile"
+ffmpeg -r $fps -f image2 -pattern_type glob -i "$filesDir/*.$3" $formatMp4 $addAllKeyframes $quality -an "$outputFile"
 # On windows, glob might not work, so use this: `image2 -i %%04d.tga`
 
 ################################################################################

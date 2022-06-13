@@ -27,7 +27,7 @@ fi
 ################################################################################
 
 # loop through files
-for file in "$1"/*.{png,jpg,jpeg,gif}
+for file in "$1"/*.{png,jpg,jpeg,gif,heic}
 do
   if [ -f $file ]; then
     imageCompressToJpg.sh "$file" $2

@@ -20,10 +20,13 @@ echoNewline
 # frame rate: -r 60
 
 # VIDEO CODEC / QUALITY
-# h264:  -c:v libx264    -crf 1          not this: -q:v 0
+# h264:  -c:v libx264   -crf 1          not this: -q:v 0
 # mpeg4: -c:v mpeg4     -crf 1
 # webm:  -c:v libvpx -c:a libvorbis
 # https://thethemefoundry.com/blog/convert-mp4-to-webm/
+
+# VIDEO PLAYBACK
+# faster decoding: -tune fastdecode
 
 # TIME CROP:
 # start:    -ss 2.3
@@ -31,13 +34,30 @@ echoNewline
 # example:  -ss 0.5 -to 1.5
 
 # ROTATE VIDEO
-# -vf "transpose=0"
+# 0 = 90CounterCLockwise and Vertical Flip (default)
+# 1 = 90Clockwise
+# 2 = 90CounterClockwise
+# 3 = 90Clockwise and Vertical Flip
+# Use -vf "transpose=2,transpose=2" for 180 degrees.
+# example: -vf "transpose=1"
 
 # REMOVE AUDIO
 # -an
 
+# Convert audio to mono
+# -af "pan=mono|c0=c1" -map 0:0 -c:v
+# ffmpeg -i video.mp4 -af "pan=mono|c0=c1" video.mp4
+
 # AUDIO CODEC
 # -c:a aac -b:a 128k -ac 2
+
+# KEYFRAMES ON EVERY FRAME
+# -vcodec libx264 -x264-params keyint=1:scenecut=0
+# or for non-mp4:
+# -keyint_min 1 -g 1
+
+# COPY CODEC (could result in non-mp4 output)
+# -vcodec copy
 
 # EFFECTS
 # Brightness/saturation/contrast
@@ -46,6 +66,9 @@ echoNewline
 # -vf format=gray
 # Invert:
 # -vf lutrgb="r=negval:g=negval:b=negval"
+# Frame interpolation
+# -vf minterpolate='fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1'
+# https://github.com/dthpham/butterflow
 
 # MERGE AUDIO TO VIDEO FILE
 # %ffmpeg% -f concat -i _concat.txt -i %audioFile% -c:a aac -b:a 128k -ac 2 final-render\%sessionId%.mp4
@@ -58,6 +81,18 @@ echoNewline
 
 # BLANK SPACE PADDING
 # -vf "pad=width=1800:height=1200:x=100:y=100:color=black"
+
+# Specific recommendations for Twitter
+# From: https://gist.github.com/marcduiker/abe8e4b7353b4c6430d556b727666620
+# - Convert pngs to mp4
+# ffmpeg -framerate 10 -i frame_%04d.png -c:v h264_qsv -b:v 5M video.mp4
+# - Convert and scale an existing mp4 to 1080:
+# ffmpeg -i input.mp4 -c:v h264_qsv -vf: scale=1080:-1 -b:v 5M output.mp4
+# - Convert infinite looping gif to limited looping mp4 (no scaling)
+# ffmpeg -i input.gif -c:v h264_qsv -filter_complex loop=loop=<NrOfLoops>:size=<TotalFrames>:start=<FramesToSkip> -b:v 5M output.mp4
+
+# ProRes
+# Info: https://ottverse.com/ffmpeg-convert-to-apple-prores-422-4444-hq/
 
 ################################################################################
 ################################################################################
