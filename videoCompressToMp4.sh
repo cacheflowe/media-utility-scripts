@@ -69,6 +69,8 @@ echoNewline
 # Frame interpolation
 # -vf minterpolate='fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1'
 # https://github.com/dthpham/butterflow
+# Boomerang
+# -filter_complex "[0]reverse[r];[0][r]concat=n=2"
 
 # MERGE AUDIO TO VIDEO FILE
 # %ffmpeg% -f concat -i _concat.txt -i %audioFile% -c:a aac -b:a 128k -ac 2 final-render\%sessionId%.mp4
@@ -82,6 +84,18 @@ echoNewline
 # BLANK SPACE PADDING
 # -vf "pad=width=1800:height=1200:x=100:y=100:color=black"
 
+# GENERATE A TEST PATTERN
+# ffmpeg -f lavfi -i testsrc=duration=10:size=3840x2160:rate=60 -c:v libx264 testsrc1.mp4
+
+# Alpha Channel video
+# (2) commands to convert from Prores to webm w/alpha channel
+# ffmpeg -i input.mov -c:v libvpx-vp9 -b:v 1000k -pass 1 -an -f null -
+# ffmpeg -i input.mov -c:v libvpx-vp9 -b:v 1000k -pass 2 output.webm
+
+# Crop and scale at the same time!
+# From: https://stackoverflow.com/a/52675535
+# crop=iw-100:ih-200,scale=960:576 
+
 # Specific recommendations for Twitter
 # From: https://gist.github.com/marcduiker/abe8e4b7353b4c6430d556b727666620
 # - Convert pngs to mp4
@@ -90,6 +104,9 @@ echoNewline
 # ffmpeg -i input.mp4 -c:v h264_qsv -vf: scale=1080:-1 -b:v 5M output.mp4
 # - Convert infinite looping gif to limited looping mp4 (no scaling)
 # ffmpeg -i input.gif -c:v h264_qsv -filter_complex loop=loop=<NrOfLoops>:size=<TotalFrames>:start=<FramesToSkip> -b:v 5M output.mp4
+
+# Fix Waifu2x super high framterate video
+# -r 60 -vf: scale=1080:-1,setpts=2*PTS
 
 # ProRes
 # Info: https://ottverse.com/ffmpeg-convert-to-apple-prores-422-4444-hq/
@@ -120,7 +137,7 @@ outputFile="$filename.compressed.mp4"
 echoInfo "Compressing video: $filename"
 
 # do conversion
-ffmpeg -y -i "$filename" -vcodec libx264 -pix_fmt yuv420p -f mp4 $customArgs $outputFile
+ffmpeg -y -i "$filename" -vcodec libx265 -pix_fmt yuv420p -f mp4 $customArgs $outputFile
 
 ################################################################################
 ################################################################################
