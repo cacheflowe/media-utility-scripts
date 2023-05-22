@@ -44,7 +44,7 @@ echoInfo "Converting $outputFile"
 palette="./tmp/palette.png"
 filters="fps=$fps,scale=$2:-1:flags=lanczos"
 echoInfo $filters
-ffmpeg -v warning -i $1 -vf "$filters,palettegen" -y $palette
+ffmpeg -v warning -i $1 -vf "$filters,palettegen=max_colors=128" -y $palette
 ffmpeg -v warning -i $1 -i $palette -lavfi "$filters [x]; [x][1:v] paletteuse" -y $outputFile
 
 ################################################################################
