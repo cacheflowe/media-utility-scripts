@@ -57,9 +57,13 @@ addAllKeyframes="-x264-params keyint=1:scenecut=0"
 formatMp4="-vcodec libx264 -pix_fmt yuvj420p -f mp4"
 temporalSmoothing="-vf minterpolate='fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1'"
 temporalSmoothing="-vf minterpolate='mi_mode=2'"
+proResAlpa="-c:v prores_ks -profile:v 4"
 # -vf scale=3840:-1
-ffmpeg -r $fps -f image2 -pattern_type glob -i "$filesDir/*.$3" $formatMp4 $addAllKeyframes $quality -an "$outputFile"
-# On windows, glob might not work, so use this: `image2 -i %%04d.tga`
+ffmpeg -r $fps -f image2 -pattern_type glob -i "$filesDir/*.$3" $formatMp4 $quality -an "$outputFile"
+# On windows, glob might not work, so use -start_number and -i %5d.png:
+# ffmpeg -r 60 -start_number 8 -i %5d.png -vcodec libx264 -pix_fmt yuv420p -f mp4 -crf 2 _output.mp4
+# This was used for DBG Globe videos:
+# ffmpeg -r $fps -f image2 -pattern_type glob -i "$filesDir/*.$3" $formatMp4 $addAllKeyframes $quality -an "$outputFile"
 
 ################################################################################
 ################################################################################
