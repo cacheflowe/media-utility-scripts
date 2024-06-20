@@ -31,10 +31,13 @@ fi
 filename=$1
 extension=$(extension $filename)
 outputFile="$filename.$extractTime.jpg"
+# outputFile="$filename-thumb.jpg"
+thumbnailResize="-vf scale=-1:256"
+thumbnailResize=""
 echoInfo "Saving thumbnail for movie: $filename"
 
 # do conversion
-ffmpeg -ss $extractTime -i $filename -t 1 -qscale 0 -f image2 "$outputFile"
+ffmpeg -ss $extractTime -i $filename -t 1 -q:v 0 -f image2 $thumbnailResize "$outputFile"
 
 ################################################################################
 ################################################################################
