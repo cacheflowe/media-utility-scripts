@@ -33,10 +33,10 @@ fi
 ################################################################################
 
 # loop through files
-for file in "$1"/*.{png,jpg,jpeg,gif}
+for file in "$1"/*.{png,jpg,jpeg,gif,heic}
 do
   if [ -f $file ]; then
-    ./imageResizeToExactSize.sh "$file" $2 $3
+    imageResizeToExactSize.sh "$file" $2 $3
   fi
 done
 

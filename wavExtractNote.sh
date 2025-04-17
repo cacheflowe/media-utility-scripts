@@ -1,12 +1,12 @@
 #!/bin/bash
+# docs: https://aubio.org/manual/latest/cli.html
 source @includes.sh
 echo '###################################################'
-echo '# Description: Search & replace strings in filenames within a directory'
-echo '# Usage: $ ./filesRenameSearchReplaceInDir.sh /some/files test hello'
-echo '# Param 1: Directory'
-echo '# Param 2: Search term'
-echo '# Param 3: Replacement string'
-echo '# Requires: Linux rename (might not exist on default OS X)'
+echo '# Description: Extract a midi note from a wav file'
+echo '# Info: Displays tmies and MIDI notes if successful'
+echo '# Usage: $ ./wavExtractNote.sh /path/to/file.wav'
+echo '# Param 1: Wav or Aif file'
+echo '# Requires: Aubio'
 echo '###################################################'
 echoNewline
 
@@ -15,29 +15,21 @@ echoNewline
 # check parameters
 
 if [[ $1 == "" ]] ; then
-  echoError '1st arg must be a directory'
-  exit 1
-fi
-
-if [[ $2 == "" ]] ; then
-  echoError '2nd arg must be search term'
-  exit 1
-fi
-
-if [[ $3 == "" ]] ; then
-  echoError '3rd arg must be replacement string'
-  exit 1
+    echoError '1st arg must be a wav or aif file'
+    exit 1
 fi
 
 ################################################################################
 ################################################################################
 
-# update filenames
-# rename -v 's/.mp4/.wav/' *.*
-rename $2 $3 $1/*
+# get filename
+filename=$1
+
+# do conversion
+aubio notes "$filename" --release-drop 90
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Images renamed in $1"
+# echoSuccess "Converted to 16/44.1 mp3 \n# $outputFile"

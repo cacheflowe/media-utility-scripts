@@ -33,7 +33,7 @@ echo Current path: %CD%
 @REM ################################################################################
 
 @REM Loop through .wav files in the directory and convert each, replacing each source .wav
-for %%i in (.\*.wav) do (
+for %%i in (.\*.m4a) do (
     @REM remove the relative path
     @REM set inputFile=%%~nxi
     @REM wavFormatTo16-44.cmd %%i

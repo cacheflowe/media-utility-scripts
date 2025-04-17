@@ -40,7 +40,7 @@ echoInfo "Changing video rate: $filename"
 
 # do conversion
 # ffmpeg -i $filename -filter:v "setpts=$2*PTS" -filter:a "atempo=1.0/$2" -vcodec libx264 -crf $3 -pix_fmt yuv420p -f mp4 $outputFile
-ffmpeg -i $filename -filter:v "setpts=$2*PTS","crop=$6:$7:$4:$5" -filter:a "atempo=1.0/$2" -vcodec libx264 -crf $3 -pix_fmt yuv420p -f mp4 $outputFile
+ffmpeg -i $filename -filter:v "setpts=$2*PTS" -filter:a "atempo=1.0/$2" -vcodec libx264 -crf $3 -pix_fmt yuv420p -f mp4 $outputFile.mp4
 
 ################################################################################
 ################################################################################

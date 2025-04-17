@@ -34,6 +34,7 @@ outputFile="$1.$2.$extension"
 
 # do conversion
 convert $1 -resize $2x$2 $outputFile
+# convert $1 -resize $2x$2 -sampling-factor 4:2:0 -strip -quality 80 -interlace JPEG -colorspace RGB $outputFile.jpg
 
 ################################################################################
 ################################################################################

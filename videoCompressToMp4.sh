@@ -137,7 +137,7 @@ outputFile="$filename.compressed.mp4"
 echoInfo "Compressing video: $filename"
 
 # do conversion
-ffmpeg -y -i "$filename" -vcodec libx265 -pix_fmt yuv420p -f mp4 $customArgs $outputFile
+ffmpeg -y -i "$filename" -vcodec libx264 -pix_fmt yuv420p -f mp4 $customArgs $outputFile
 
 ################################################################################
 ################################################################################

@@ -34,7 +34,8 @@ outputFile="$1.with-audio.$extension"
 echoInfo "Adding audio $2 to $1"
 
 # add audio. via: https://superuser.com/a/590210
-ffmpeg -y -i "$filename" -i "$audioFile" -c:v copy -c:a aac -b:a 320k -strict -2 -map 0:v:0 -map 1:a:0 "$outputFile"
+# ffmpeg -y -i "$filename" -i "$audioFile" -c:v copy -c:a aac -b:a 320k -strict -2 -map 0:v:0 -map 1:a:0 "$outputFile"
+ffmpeg -y -i "$filename" -i "$audioFile" -c:v libx264 -b:v 2500k -c:a aac -b:a 320k -strict -2 -map 0:v:0 -map 1:a:0 "$outputFile"
 
 ################################################################################
 ################################################################################

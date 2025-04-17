@@ -38,11 +38,11 @@ echo Converting audio: %inputFile% to %outputFile%
 ffmpeg -i %inputFile% -af aformat=s16:44100 %outputFile%
 
 @REM delete input file
-del %inputFile%
+@REM del %inputFile%
 @REM get filename without the path
 @REM set fileName=%~nx1
 @REM rename saved file to original name
-rename %outputFile% %inputFile%
+@REM rename %outputFile% %inputFile%
 
 @REM ################################################################################
 @REM ################################################################################

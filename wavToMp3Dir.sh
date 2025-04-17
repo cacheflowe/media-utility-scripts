@@ -38,7 +38,7 @@ fi
 for file in "$1"/*.{wav,aif,mp3}
 do
   if [ -f $file ]; then
-    ./wavToMp3.sh "$file" $bitrate $mono
+    wavToMp3.sh "$file" $bitrate $mono
   fi
 done
 

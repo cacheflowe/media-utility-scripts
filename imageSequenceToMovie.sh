@@ -48,9 +48,9 @@ echoInfo "Images to video: $filesDir"
 dirLastEl="$(basename $filesDir)"
 curDirName=${PWD##*/}
 outputFile="$filesDir/_$curDirName.mp4"
-outputFile="$filesDir/../../Content_Equirect/$curDirName.mp4"
+# outputFile="$filesDir/../../Content_Equirect/$curDirName.mp4"
 quality="-crf $2"
-quality="-b:v 30M"
+# quality="-b:v 30M"
 
 # do conversion
 addAllKeyframes="-x264-params keyint=1:scenecut=0"

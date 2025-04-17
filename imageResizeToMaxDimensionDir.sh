@@ -27,7 +27,7 @@ fi
 ################################################################################
 
 # loop through files
-for file in "$1"/*.{png,jpg,jpeg,gif}
+for file in "$1"/*.{png,PNG,jpg,JPG,jpeg,JPEG,gif,GIF,heic,HEIC}
 do
   if [ -f $file ]; then
     imageResizeToMaxDimension.sh "$file" $2

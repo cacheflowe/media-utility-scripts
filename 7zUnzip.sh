@@ -1,12 +1,10 @@
 #!/bin/bash
 source @includes.sh
 echo '###################################################'
-echo '# Description: Search & replace strings in filenames within a directory'
-echo '# Usage: $ ./filesRenameSearchReplaceInDir.sh /some/files test hello'
-echo '# Param 1: Directory'
-echo '# Param 2: Search term'
-echo '# Param 3: Replacement string'
-echo '# Requires: Linux rename (might not exist on default OS X)'
+echo '# Description: Search a directory for files above a size'
+echo '# Usage: $ ./7zUnzip.sh /path/to/zip/'
+echo '# Param 1: .7z file'
+echo '# Requires: 7z'
 echo '###################################################'
 echoNewline
 
@@ -15,29 +13,18 @@ echoNewline
 # check parameters
 
 if [[ $1 == "" ]] ; then
-  echoError '1st arg must be a directory'
-  exit 1
-fi
-
-if [[ $2 == "" ]] ; then
-  echoError '2nd arg must be search term'
-  exit 1
-fi
-
-if [[ $3 == "" ]] ; then
-  echoError '3rd arg must be replacement string'
-  exit 1
+    echoError "1st arg must be a .7z file"
+    exit 1
 fi
 
 ################################################################################
 ################################################################################
 
-# update filenames
-# rename -v 's/.mp4/.wav/' *.*
-rename $2 $3 $1/*
+# do search
+7z x "$1" -o* 
 
 ################################################################################
 ################################################################################
 # complete
 
-echoSuccess "Images renamed in $1"
+echoSuccess "Unzipped file: $1"

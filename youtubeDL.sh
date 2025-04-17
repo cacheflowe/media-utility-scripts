@@ -7,6 +7,9 @@
 # AUDIO:
 # youtube-dl -k -f m4a $1
 
+# THUMBNAIL
+# youtube-dl -k -f --write-thumbnail --skip-download
+
 # VIDEO:
 cd _saved_files
-youtube-dl -k -f mp4 $1
+youtube-dl --write-thumbnail -k -f mp4 $1

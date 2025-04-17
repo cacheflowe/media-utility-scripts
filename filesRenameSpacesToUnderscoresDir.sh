@@ -21,7 +21,7 @@ fi
 # loop through files
 for file in "$1"/*
 do
-  ./filesRenameSpacesToUnderscores.sh "$file"
+  filesRenameSpacesToUnderscores.sh "$file"
 done
 
 ################################################################################

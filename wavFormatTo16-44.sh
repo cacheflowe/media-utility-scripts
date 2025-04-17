@@ -23,10 +23,12 @@ fi
 # get filename
 filename=$1
 extension=$(extension $filename)
-outputFile="$filename.wav"
+outputFile="$filename.16-44.wav"
 
 # do conversion
 ffmpeg -i $filename -af aformat=s16:44100 "$outputFile"
+rm $filename
+mv "$outputFile" $filename
 
 ################################################################################
 ################################################################################
