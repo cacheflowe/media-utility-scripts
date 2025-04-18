@@ -15,11 +15,10 @@ echo.
 @REM # check parameters & set defaults
 @REM ################################################################################
 
-set userArgs=%*
 set defaultArgs=-b 16 -r 44100
 
 @REM Check 1st arg
-IF "%1"=="" (
+IF "%~1"=="" (
     echo Error: 1st arg must be an audio file or directory
     exit /b 1
 )
@@ -51,14 +50,14 @@ if exist "%inputPath%\" (
     for %%F in ("%inputPath%\*.wav" "%inputPath%\*.aif" "%inputPath%\*.aiff" "%inputPath%\*.mp3" "%inputPath%\*.flac") do (
         echo.
         echo Processing: %%F
-        CALL :ProcessFile "%%F" 
+        CALL :ProcessFile "%%F" "%soxArgs%"
     )
     
     echo.
     echo Finished converting all audio files in directory: %inputPath%
 ) else (
     @REM Process single file
-    CALL :ProcessFile "%inputPath%"
+    CALL :ProcessFile "%inputPath%" "%soxArgs%"
 )
 
 exit /b 0
@@ -66,12 +65,13 @@ exit /b 0
 :ProcessFile
 @REM Process a single audio file
 set "filename=%~1"
-set "outputFile=%~dpn1.16-44.wav"
+set "args=%~2"
+set "outputFile=%~dpn1_16-44%~x1"
 
 echo Converting: %filename%
 
 @REM Do conversion
-sox "%filename%" %soxArgs% "%outputFile%"
+sox "%filename%" %args% "%outputFile%"
 
 echo Success: Converted to 16/44.1: %outputFile%
 

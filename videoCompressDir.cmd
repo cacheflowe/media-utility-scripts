@@ -1,54 +1,78 @@
 @echo off
+setlocal enabledelayedexpansion
+
 echo ###################################################
 echo # Description: Compress videos in a directory to MP4
-echo # Usage: videoCompressDir.cmd C:\path\to\videos ["-crf 23 -preset medium"]
-echo # Param 1: Directory containing videos
-echo # Param 2 [Optional]: Custom ffmpeg args (default: "-crf 23 -preset medium")
+echo # Usage: videoCompressDir.cmd /path/to/video.mp4 [custom args]
+echo #        videoCompressDir.cmd /path/to/videos/ [custom args]
+echo # Param 1: Video file or directory
+echo # Param 2+ [Optional]: Custom args for ffmpeg
 echo # Requires: ffmpeg
 echo ###################################################
 echo.
 
-REM Check parameters
+@REM ################################################################################
+@REM # check parameters & set defaults
+@REM ################################################################################
+
+set defaultArgs=-crf 23 -preset medium
+
+@REM Check 1st arg
 IF "%~1"=="" (
-    echo Error: 1st arg must be a directory
+    echo Error: 1st arg must be a video file or directory
     exit /b 1
 )
+set inputPath=%1
 
-REM Validate directory exists
-IF NOT EXIST "%~1\" (
-    echo Error: Directory not found: %~1
-    exit /b 1
+@REM Get remaining args for ffmpeg
+set ffmpegArgs=
+if "%2"=="" (
+    @REM Check optional 2nd arg and provide default value
+    set ffmpegArgs=%defaultArgs%
+    echo ### Using default args: %defaultArgs%
+) else (
+    @REM Use all arguments after the first one
+    set "allArgs=%*"
+    for /f "tokens=1,* delims= " %%a in ("!allArgs!") do set "ffmpegArgs=%%b"
+    echo ### Using user-defined args: !ffmpegArgs!
 )
 
-REM Set defaults
-set "customArgs=-crf 23 -preset medium"
-IF NOT "%~2"=="" set "customArgs=%~2"
-echo Using custom args: %customArgs%
+@REM ################################################################################
+@REM Check if path is a directory or a file
+@REM ################################################################################
 
-REM Get directory
-set "directory=%~1"
-echo Processing videos in: %directory%
-
-REM Loop through video files
-FOR %%i IN ("%directory%\*.mp4" "%directory%\*.mov" "%directory%\*.avi" "%directory%\*.mkv" "%directory%\*.wmv") DO (
-    CALL :ProcessVideo "%%i" "%customArgs%"
+if exist "%inputPath%\" (
+    @REM Process directory
+    echo.
+    echo Processing all video files in directory: %inputPath%
+    
+    @REM Process all video files in the directory
+    for %%F in ("%inputPath%\*.mp4" "%inputPath%\*.mov" "%inputPath%\*.avi" "%inputPath%\*.mkv" "%inputPath%\*.wmv") do (
+        echo.
+        echo Processing: %%F
+        CALL :ProcessFile "%%F" "%ffmpegArgs%"
+    )
+    
+    echo.
+    echo Finished compressing all videos in directory: %inputPath%
+) else (
+    @REM Process single file
+    CALL :ProcessFile "%inputPath%" "%ffmpegArgs%"
 )
-
-echo Success: All videos processed
 
 exit /b 0
 
-:ProcessVideo
-REM Process a single video
+:ProcessFile
+@REM Process a single video file
 set "filename=%~1"
-set "customArgs=%~2"
-set "outputFile=%~dpn1.compressed.mp4"
+set "args=%~2"
+set "outputFile=%~dpn1_compressed%~x1"
 
 echo Compressing: %filename%
 
-REM Do conversion
-ffmpeg -i "%filename%" -c:v libx264 -pix_fmt yuv420p %customArgs% -c:a aac -b:a 192k "%outputFile%"
+@REM Do conversion
+ffmpeg -i "%filename%" -c:v libx264 -pix_fmt yuv420p %args% -c:a aac -b:a 192k "%outputFile%"
 
-echo Success: Compressed to %outputFile%
+echo Success: Compressed to: %outputFile%
 
 exit /b 0

@@ -19,7 +19,7 @@ if [[ $1 == "" ]] ; then
 fi
 
 extractTime=0
-if [[ $2 -eq 0 ]] ; then
+if [[ -z "$2" ]] ; then
     echoInfo "[Optional]: Using default frametime of ${extractTime} seconds"
 else
     extractTime=$2
@@ -27,6 +27,35 @@ fi
 
 ################################################################################
 ################################################################################
+# Function to process a single video file
+processPosterFrame() {
+    local videoFile="$1"
+    local extractTime="$2"
+    
+    # Skip if file doesn't exist
+    if [ ! -f "$videoFile" ]; then
+        echoError "File not found: $videoFile"
+        return 1
+    fi
+    
+    # Get filename and create output filename
+    local filename="$videoFile"
+    local extension=$(extension "$filename")
+    local outputFile="$filename.$extractTime.jpg"
+    
+    echoInfo "Saving thumbnail for movie: $filename at $extractTime seconds"
+    
+    # Do conversion
+    ffmpeg -ss "$extractTime" -i "$videoFile" -t 1 -q:v 0 -f image2 "$outputFile"
+    
+    if [ $? -eq 0 ]; then
+        echoSuccess "Extracted poster frame at $extractTime seconds: \n# $outputFile"
+        return 0
+    else
+        echoError "Failed to extract poster frame from: $videoFile"
+        return 1
+    fi
+}
 
 # Check if path is a directory or a file
 if [ -d "$1" ]; then
@@ -41,38 +70,14 @@ if [ -d "$1" ]; then
         echoNewline
         echoInfo "Processing: $file"
         
-        # Get filename
-        filename="$file"
-        extension=$(extension "$filename")
-        outputFile="$filename.$extractTime.jpg"
-        
-        echoInfo "Saving thumbnail for movie: $filename at $extractTime seconds"
-        
-        # Do conversion
-        ffmpeg -ss $extractTime -i "$filename" -t 1 -q:v 0 -f image2 "$outputFile"
-        
-        echoSuccess "Extracted poster frame at $extractTime seconds: \n# $outputFile"
+        # Process the file
+        processPosterFrame "$file" "$extractTime"
     done
     
     echoNewline
     echoSuccess "Finished processing all videos in directory: $1"
 else
+    echoInfo "Processing file: $1"
     # Process single file
-    # get filename
-    filename=$1
-    extension=$(extension $filename)
-    outputFile="$filename.$extractTime.jpg"
-    # outputFile="$filename-thumb.jpg"
-    thumbnailResize="-vf scale=-1:256"
-    thumbnailResize=""
-    echoInfo "Saving thumbnail for movie: $filename at $extractTime seconds"
-
-    # do conversion
-    ffmpeg -ss $extractTime -i $filename -t 1 -q:v 0 -f image2 $thumbnailResize "$outputFile"
-
-    ################################################################################
-    ################################################################################
-    # complete
-
-    echoSuccess "Extracted poster frame at $extractTime seconds: \n# $outputFile"
+    processPosterFrame "$1" "$extractTime"
 fi
