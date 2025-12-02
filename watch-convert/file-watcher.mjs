@@ -2,6 +2,7 @@ import chokidar from "chokidar";
 import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import { execSync } from "child_process";
 
 class FileWatcher {
   // dirs
@@ -19,6 +20,9 @@ class FileWatcher {
   static IMG_OUTPUT_FORMAT = "jpg";
   static JPG_QUALITY = 80;
   static JPG_OPTIONS = { quality: FileWatcher.JPG_QUALITY, mozjpeg: true };
+  static VID_OUTPUT_FORMAT = "mp4";
+  static VID_QUALITY = 16;
+  static VID_REMOVE_AUDIO = false;
 
   constructor(maxSize = FileWatcher.DEFAULT_MAX_SIZE) {
     this.maxSize = maxSize;
@@ -126,7 +130,7 @@ class FileWatcher {
     if (this.imageExtensions.includes(ext)) {
       await this.processImageFile(filePath, fileName, ext);
     } else if (this.videoExtensions.includes(ext)) {
-      await this.processVideoFile(filePath);
+      await this.processVideoFile(filePath, fileName, ext);
     } else {
       console.warn(`Unsupported file type for file: ${filePath}`);
       await this.handleFailedFile(filePath, fileName);
@@ -135,7 +139,9 @@ class FileWatcher {
 
   async processImageFile(filePath, fileName, ext) {
     // build output filename
-    const outputFileName = `${fileName.replace(ext, "")}_${this.maxSize}.${FileWatcher.IMG_OUTPUT_FORMAT}`;
+    const outputFileName = `${this.CONVERTED}/${fileName.replace(ext, "")}_${this.maxSize}.${
+      FileWatcher.IMG_OUTPUT_FORMAT
+    }`;
 
     // read file with retry logic
     let imageData;
@@ -159,7 +165,7 @@ class FileWatcher {
         .rotate()
         .resize(this.maxSize, this.maxSize, { fit: "inside", withoutEnlargement: true })
         .toFormat("jpg", FileWatcher.JPG_OPTIONS)
-        .toFile(`${this.CONVERTED}/${outputFileName}`);
+        .toFile(outputFileName);
       success = true;
       console.log(`Image Imported: ${fileName} (${this.dropboxQueue.length + 1} left)`);
     } catch (error) {
@@ -174,9 +180,30 @@ class FileWatcher {
     }
   }
 
-  async processVideoFile(filePath) {
-    const fileName = path.basename(filePath);
-    console.log(`Video file detected, moving to processed: ${fileName}`);
+  async processVideoFile(filePath, fileName, ext) {
+    // build output filename
+    const outputFileName = `${this.CONVERTED}/${fileName.replace(ext, "")}_${this.maxSize}.${
+      FileWatcher.VID_OUTPUT_FORMAT
+    }`;
+
+    // ffmpeg command
+    let removeAudio = FileWatcher.VID_REMOVE_AUDIO ? "-an" : "";
+    let minterpolate = ""; // ",minterpolate='fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1'";
+    const command = `ffmpeg -y -i ${filePath} -vcodec libx264 -pix_fmt yuv420p -f mp4 -crf ${FileWatcher.VID_QUALITY} -vf scale=${this.maxSize}:${this.maxSize}:force_original_aspect_ratio=decrease${minterpolate} ${removeAudio} ${outputFileName}`;
+
+    await execSync(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error executing ffmpeg: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        // console.error(`ffmpeg stderr: ${stderr}`);
+      }
+      // console.log(`ffmpeg stdout: ${stdout}`);
+      console.log(`Video converted successfully to ${outputFileName}`);
+    });
+
+    console.log(`Video converted, moving to processed: ${fileName}`);
     const newName = path.join(this.PROCESSED, fileName);
     await this.moveFile(filePath, newName);
   }
@@ -204,9 +231,10 @@ class FileWatcher {
   }
 }
 
-// get args
+// get args & apply
 let args = process.argv.slice(2);
 let maxSize = args.includes("max-size") ? parseInt(args[args.indexOf("max-size") + 1]) : FileWatcher.DEFAULT_MAX_SIZE;
+FileWatcher.VID_REMOVE_AUDIO = args.includes("remove-audio");
 
 // instantiate file watcher
 const fileWatcher = new FileWatcher(maxSize);
