@@ -1,0 +1,17 @@
+{
+  "name": "watch-convert",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "watch": "nodemon --watch ./file-watcher.mjs --ext mjs node ./file-watcher.mjs"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "nodemon": "^3.1.11",
+    "sharp": "^0.34.5"
+  }
+}
