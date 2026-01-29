@@ -21,13 +21,14 @@ class FileWatcher {
   static JPG_QUALITY = 80;
   static JPG_OPTIONS = { quality: FileWatcher.JPG_QUALITY, mozjpeg: true };
   static VID_OUTPUT_FORMAT = "mp4";
-  static VID_QUALITY = 16;
+  static VID_QUALITY = 22;
   static VID_REMOVE_AUDIO = false;
 
   constructor(maxSize = FileWatcher.DEFAULT_MAX_SIZE) {
     this.maxSize = maxSize;
     this.createPaths();
     this.addWatcher();
+    this.openWatchFolder();
     this.dropboxQueue = [];
   }
 
@@ -58,6 +59,24 @@ class FileWatcher {
       .on("add", async (filePath) => this.onFileAdded(filePath))
       .on("change", (filePath) => this.onFileChanged(filePath))
       .on("unlink", (filePath) => this.onFileRemoved(filePath));
+  }
+
+  openWatchFolder() {
+    // open the dropbox folder in the file explorer
+    const folderPath = path.join(process.cwd(), this.DROPBOX);
+    switch (process.platform) {
+      case "win32":
+        execSync(`start "" "${folderPath}"`);
+        break;
+      case "darwin":
+        execSync(`open "${folderPath}"`);
+        break;
+      case "linux":
+        execSync(`xdg-open "${folderPath}"`);
+        break;
+      default:
+        console.warn("Unsupported platform: cannot open watch folder automatically.");
+    }
   }
 
   async readFileWithRetry(filePath, maxRetries = 10, delay = 100) {
@@ -191,17 +210,13 @@ class FileWatcher {
     let minterpolate = ""; // ",minterpolate='fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1'";
     const command = `ffmpeg -y -i ${filePath} -vcodec libx264 -pix_fmt yuv420p -f mp4 -crf ${FileWatcher.VID_QUALITY} -vf scale=${this.maxSize}:${this.maxSize}:force_original_aspect_ratio=decrease${minterpolate} ${removeAudio} ${outputFileName}`;
 
-    await execSync(command, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error executing ffmpeg: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        // console.error(`ffmpeg stderr: ${stderr}`);
-      }
-      // console.log(`ffmpeg stdout: ${stdout}`);
+    try {
+      await execSync(command, { stdio: "ignore" });
       console.log(`Video converted successfully to ${outputFileName}`);
-    });
+    } catch (error) {
+      console.error(`Error executing ffmpeg: ${error.message}`);
+      return;
+    }
 
     console.log(`Video converted, moving to processed: ${fileName}`);
     const newName = path.join(this.PROCESSED, fileName);
