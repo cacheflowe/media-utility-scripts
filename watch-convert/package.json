@@ -7,7 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "watch": "nodemon --watch ./file-watcher.mjs --ext mjs node ./file-watcher.mjs"
+    "watch": "nodemon --watch ./file-watcher.mjs --ext mjs node ./file-watcher.mjs max-size 640"
   },
   "dependencies": {
     "chokidar": "^5.0.0",
