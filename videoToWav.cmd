@@ -17,6 +17,7 @@ echo.
 
 set userArgs=%*
 set defaultArgs=-af aformat=s16:44100
+@REM set defaultArgs=-vn -acodec pcm_s16le -ar 44100 -ac 2 
 
 @REM Check 1st arg
 IF "%1"=="" (
