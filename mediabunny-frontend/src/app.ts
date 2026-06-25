@@ -79,6 +79,7 @@ const metaDuration = document.getElementById("meta-duration") as HTMLSpanElement
 const metaResolution = document.getElementById("meta-resolution") as HTMLSpanElement;
 const metaAspect = document.getElementById("meta-aspect") as HTMLSpanElement;
 const metaVcodec = document.getElementById("meta-vcodec") as HTMLSpanElement;
+const metaFps = document.getElementById("meta-fps") as HTMLSpanElement;
 const metaAtrack = document.getElementById("meta-atrack") as HTMLSpanElement;
 const metaTags = document.getElementById("meta-tags") as HTMLPreElement;
 
@@ -114,6 +115,7 @@ const allowRotMetadata = document.getElementById("allow-rot-metadata") as HTMLIn
 const enableFps = document.getElementById("enable-fps") as HTMLInputElement;
 const fpsControlsGroup = document.getElementById("fps-controls-group") as HTMLDivElement;
 const targetFps = document.getElementById("target-fps") as HTMLSelectElement;
+const fpsMode = document.getElementById("fps-mode") as HTMLSelectElement;
 
 // Custom Bitrate Elements
 const useCustomBitrate = document.getElementById("use-custom-bitrate") as HTMLInputElement;
@@ -156,6 +158,40 @@ let sourceVideoHeight: number = 0;
 let sourceVideoDuration: number = 0;
 let currentActiveConversion: Conversion | null = null;
 let isDraggingTrim = false;
+
+// --- Frame Interpolation / Blending State ---
+interface InterpolationState {
+  lastSample: any | null;
+  nextOutputTimestamp: number;
+  isFirstFrame: boolean;
+  blendCanvas: HTMLCanvasElement | null;
+  blendCtx: CanvasRenderingContext2D | null;
+}
+
+let intState: InterpolationState = {
+  lastSample: null,
+  nextOutputTimestamp: 0,
+  isFirstFrame: true,
+  blendCanvas: null,
+  blendCtx: null,
+};
+
+function resetInterpolationState() {
+  if (intState.lastSample) {
+    try {
+      intState.lastSample.close();
+    } catch {
+      // already closed
+    }
+  }
+  intState = {
+    lastSample: null,
+    nextOutputTimestamp: 0,
+    isFirstFrame: true,
+    blendCanvas: null,
+    blendCtx: null,
+  };
+}
 
 const QUALITY_MAP: Record<number, typeof QUALITY_MEDIUM> = {
   1: QUALITY_VERY_LOW,
@@ -328,6 +364,22 @@ async function handleVideoLoad(file: File) {
       metaResolution.textContent = `${sourceVideoWidth}x${sourceVideoHeight}`;
       metaAspect.textContent = `${(sourceVideoWidth / sourceVideoHeight).toFixed(2)}:1`;
       metaVcodec.textContent = String(codec).toUpperCase();
+
+      // Retrieve packet stats for estimating native video framerate (FPS)
+      try {
+        // computePacketStats(300) retrieves up to 300 packets/frames to estimate FPS/bitrate quickly
+        const stats = await primaryVideo.computePacketStats(300);
+        if (stats && stats.averagePacketRate) {
+          metaFps.textContent = `${stats.averagePacketRate.toFixed(2)} fps`;
+          console.log(`Computed original FPS estimate: ${stats.averagePacketRate} fps from prefix stats.`);
+        } else {
+          metaFps.textContent = "Unknown";
+        }
+      } catch (err) {
+        console.warn("Could not compute primary video packet stats for FPS metadata:", err);
+        metaFps.textContent = "Unknown";
+      }
+
       metaAtrack.textContent = audioTracks.length > 0 ? `${audioTracks.length} track(s)` : "Muted / None";
 
       console.log(
@@ -649,6 +701,9 @@ conversionForm.addEventListener("submit", async (e) => {
     return;
   }
 
+  // Reset custom interpolation state variables
+  resetInterpolationState();
+
   // Visual UI states shifts
   convertBtn.style.display = "none";
   cancelBtn.style.display = "inline-block";
@@ -706,6 +761,110 @@ conversionForm.addEventListener("submit", async (e) => {
         if (resizeHeight.value) videoConfig.height = parseInt(resizeHeight.value);
         videoConfig.fit = resizeFit.value as "fill" | "contain" | "cover";
         console.log(`Setting resize dimensions: ${videoConfig.width}x${videoConfig.height} (${videoConfig.fit})`);
+      }
+
+      // Handle custom target frame rate and resampling mode
+      if (enableFps.checked) {
+        const fpsVal = parseInt(targetFps.value);
+        if (!isNaN(fpsVal) && fpsVal > 0) {
+          const mode = fpsMode.value;
+          if (mode === "blend") {
+            // Bidirectional blending mode is handled by a custom 'process' hook
+            // Note: Since we manipulate the frame list and timestamps manually, we do NOT set 'videoConfig.frameRate'.
+            // Setting 'videoConfig.frameRate' triggers MediaBunny's interior frame repeater.
+            const frameInterval = 1 / fpsVal;
+            console.log(`Setting up hardware-accelerated Bidirectional Frame Blending at ${fpsVal} FPS.`);
+
+            videoConfig.process = async (sample: any) => {
+              const width = sample.codedWidth;
+              const height = sample.codedHeight;
+
+              if (intState.isFirstFrame) {
+                intState.isFirstFrame = false;
+                intState.nextOutputTimestamp = sample.timestamp;
+                intState.lastSample = sample.clone();
+
+                intState.blendCanvas = document.createElement("canvas");
+                intState.blendCanvas.width = width;
+                intState.blendCanvas.height = height;
+                intState.blendCtx = intState.blendCanvas.getContext("2d")!;
+
+                // Emit precise first frame clone mapped to the target timeline
+                const firstOut = sample.clone();
+                firstOut.setTimestamp(intState.nextOutputTimestamp);
+                firstOut.setDuration(frameInterval);
+                intState.nextOutputTimestamp += frameInterval;
+                return [firstOut];
+              }
+
+              const F_t = intState.lastSample!;
+              const F_tPlus1 = sample;
+
+              const T_t = F_t.timestamp;
+              const T_tPlus1 = F_tPlus1.timestamp;
+              const stepDuration = T_tPlus1 - T_t;
+
+              const results: any[] = [];
+
+              // Generate blended frames covering the step interval [T_t, T_tPlus1]
+              while (intState.nextOutputTimestamp <= T_tPlus1) {
+                const t_out = intState.nextOutputTimestamp;
+
+                // Interpolation weight: ratio of current out-timestamp inside the step
+                let w = 0;
+                if (stepDuration > 0) {
+                  w = (t_out - T_t) / stepDuration;
+                }
+                w = Math.max(0, Math.min(1, w)); // Clamp to [0, 1] bounds
+
+                // Apply S-Curve (Smoothstep) to sharpen intermediate frames and reduce ghosting/blur
+                const wEased = w * w * (3 - 2 * w);
+
+                const canvas = intState.blendCanvas!;
+                const ctx = intState.blendCtx!;
+                ctx.clearRect(0, 0, width, height);
+
+                // Extract underlying WebCodecs VideoFrame resources
+                const frameT = F_t.toVideoFrame();
+                const frameTPlus1 = F_tPlus1.toVideoFrame();
+
+                // Canvas composite ops: Blend F_t and F_tPlus1 correctly using standard opaque blending.
+                // In 2D Canvas context, drawing with alpha < 1 over a transparent or cleared black background
+                // results in a translucent, semi-transparent frame, causing severe flickering/darkness.
+                // To fix this, we first draw F_t fully opaque, and then paint F_tPlus1 over it with opacity "wEased".
+                ctx.globalAlpha = 1.0;
+                ctx.drawImage(frameT, 0, 0, width, height);
+
+                ctx.globalAlpha = wEased;
+                ctx.drawImage(frameTPlus1, 0, 0, width, height);
+
+                // Close frames immediately to protect browser thread from heavy texture leaking
+                frameT.close();
+                frameTPlus1.close();
+
+                // Build the interpolated VideoSample directly from the compiled canvas
+                // MediaBunny will inspect the canvas and turn it into a VideoFrame automatically.
+                const blendedSample = new (sample.constructor as any)(canvas, {
+                  timestamp: t_out,
+                  duration: frameInterval,
+                });
+
+                results.push(blendedSample);
+                intState.nextOutputTimestamp += frameInterval;
+              }
+
+              // Cycle references
+              F_t.close();
+              intState.lastSample = F_tPlus1.clone();
+
+              return results;
+            };
+          } else {
+            // Default Frame duplication mode
+            videoConfig.frameRate = fpsVal;
+            console.log(`Setting output target frame rate: ${fpsVal} FPS (continuous repeating mode).`);
+          }
+        }
       }
     }
 
@@ -829,6 +988,9 @@ conversionForm.addEventListener("submit", async (e) => {
       alert(`Conversion failure: ${error.message || error}`);
     }
   } finally {
+    // Clear custom interpolation state reference buffers to avoid memory leaks
+    resetInterpolationState();
+
     // Reset visual layouts back
     convertBtn.style.display = "inline-block";
     cancelBtn.style.display = "none";

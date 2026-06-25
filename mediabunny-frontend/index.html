@@ -151,6 +151,10 @@
                   <span id="meta-vcodec">-</span>
                 </div>
                 <div class="meta-item">
+                  <span class="meta-label">Original FPS</span>
+                  <span id="meta-fps">-</span>
+                </div>
+                <div class="meta-item">
                   <span class="meta-label">Audio Tracks</span>
                   <span id="meta-atrack">-</span>
                 </div>
@@ -485,6 +489,49 @@ None detected</pre
                           Allow Rotation Metadata
                         </label>
                       </fieldset>
+                    </div>
+                  </div>
+
+                  <!-- Frame Rate settings -->
+                  <div
+                    style="
+                      margin-top: 1rem;
+                      border-top: 1px dashed var(--pico-muted-border-color);
+                      padding-top: 0.75rem;
+                    "
+                  >
+                    <label for="enable-fps">
+                      <input type="checkbox" id="enable-fps" name="enable-fps" />
+                      ⏱️ Resample / Normalize Frame Rate (FPS)
+                    </label>
+                    <div id="fps-controls-group" style="display: none; margin-top: 0.6rem">
+                      <div class="grid" style="align-items: center; margin-bottom: 0">
+                        <div>
+                          <label for="target-fps" style="font-size: 0.8rem">Target Frame Rate (FPS):</label>
+                          <select id="target-fps" name="target-fps" style="margin-bottom: 0">
+                            <option value="15">15 FPS (Classic / Low bandwidth)</option>
+                            <option value="24">24 FPS (Cinematic standard)</option>
+                            <option value="25">25 FPS (PAL standard)</option>
+                            <option value="30" selected>30 FPS (Standard smooth NTSC)</option>
+                            <option value="50">50 FPS (PAL high-framerate)</option>
+                            <option value="60">60 FPS (Ultra smooth / gaming standard)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label for="fps-mode" style="font-size: 0.8rem">Resampling Mode:</label>
+                          <select id="fps-mode" name="fps-mode" style="margin-bottom: 0">
+                            <option value="duplicate" selected>Frame Repeating (Fast / Standard)</option>
+                            <option value="blend">Traditional Bidirectional Blending (Smooth)</option>
+                          </select>
+                        </div>
+                      </div>
+                      <small
+                        style="display: block; color: var(--pico-muted-color); margin-top: 0.5rem; font-size: 0.8rem"
+                      >
+                        💡 <strong>Bidirectional Blending</strong> uses hardware-accelerated 2D canvas interpolation to
+                        blend adjacent source frames dynamically, making video playback look cinematic and ultra-smooth
+                        on higher frame rates.
+                      </small>
                     </div>
                   </div>
                 </article>
