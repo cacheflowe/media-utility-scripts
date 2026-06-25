@@ -1,0 +1,19 @@
+{
+  "name": "mediabunny-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "update-libs": "npx npm-check-updates -u && npm install"
+  },
+  "dependencies": {
+    "@picocss/pico": "^2.1.1",
+    "mediabunny": "^1.49.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0"
+  }
+}

@@ -1,0 +1,299 @@
+@import "@picocss/pico";
+
+:root {
+  --primary-color: #ff6b81;
+}
+
+/* Custom Dropzone Styling */
+#dropzone {
+  border: 3px dashed var(--pico-muted-border-color);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  background-color: var(--pico-card-background-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 2rem;
+}
+
+#dropzone.dragging {
+  border-color: var(--pico-primary-background);
+  background-color: rgba(255, 107, 129, 0.05);
+  box-shadow: 0 0 15px rgba(255, 107, 129, 0.15);
+}
+
+#dropzone svg {
+  margin-bottom: 1rem;
+  color: var(--pico-muted-color);
+  transition: color 0.3s ease;
+}
+
+#dropzone.dragging svg {
+  color: var(--pico-primary-background);
+}
+
+/* Hide standard file input but keep it accessible */
+#video-file-input {
+  display: none;
+}
+
+/* Video Preview Containers */
+.video-container {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  position: relative;
+}
+
+.video-container video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Meta list style */
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.meta-item {
+  background: var(--pico-card-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.meta-label {
+  font-weight: bold;
+  color: var(--pico-muted-color);
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Slider Section for Time Cropping */
+.slider-group {
+  margin-bottom: 1.5rem;
+}
+
+.slider-group label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+}
+
+.slider-group span.time-val {
+  font-family: monospace;
+  background: var(--pico-code-background-color);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Custom indicator showing visual selection in trim */
+.trim-visualizer {
+  position: relative;
+  height: 20px;
+  background-color: var(--pico-muted-border-color);
+  border-radius: 10px;
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border: 1px solid var(--pico-muted-border-color);
+}
+
+.trim-selection {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-color: rgba(255, 107, 129, 0.35);
+  border-left: 2px solid var(--pico-primary-background);
+  border-right: 2px solid var(--pico-primary-background);
+  transition: all 0.1s ease;
+}
+
+/* Configuration Card Formatting */
+article.config-card {
+  margin-bottom: 2rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 12px;
+}
+
+header.card-header {
+  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+  padding: 1rem 1.5rem;
+  background-color: var(--pico-card-sectioning-background-color);
+  border-bottom: 1px solid var(--pico-muted-border-color);
+  font-weight: bold;
+}
+
+/* Real-time console detail */
+#log-console {
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.8rem;
+  background-color: #1a1a1a;
+  color: #a6e22e;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 0;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--pico-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  transition: background-color 0.2s;
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--pico-muted-border-color);
+}
+
+.theme-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+nav.brand-nav {
+  border-bottom: 1px solid var(--pico-muted-border-color);
+  margin-bottom: 2rem;
+  padding: 0.5rem 0;
+}
+
+/* Highlight matching presets */
+.preset-badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
+  vertical-align: middle;
+  margin-left: 0.5rem;
+}
+
+/* Workshop Responsive 2-Column Grid Layout */
+.workshop-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 992px) {
+  .workshop-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* Mathematically equal width, regardless of content */
+  }
+}
+
+.workshop-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.workshop-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Custom Dual Range Slider Overlays */
+.range-slider-wrapper {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.range-slider-wrapper .trim-visualizer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 15px; /* Centers the visual scrollbar tracking */
+  height: 10px;
+  background-color: var(--pico-muted-border-color);
+  border-radius: 5px;
+  z-index: 1;
+  margin: 0;
+  width: 100%;
+}
+
+.range-slider-wrapper .range-slider-input {
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+  background: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 40px !important;
+  box-shadow: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Custom Thumbs on Webkit (Chrome, Safari, Opera, Edge) */
+.range-slider-wrapper .range-slider-input::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--pico-primary-background, #ff6b81);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1.5px 5px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+  margin-top: 0;
+}
+
+.range-slider-wrapper .range-slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.22);
+}
+
+/* Custom Thumbs on Firefox */
+.range-slider-wrapper .range-slider-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--pico-primary-background, #ff6b81);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1.5px 5px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.range-slider-wrapper .range-slider-input::-moz-range-thumb:hover {
+  transform: scale(1.22);
+}
+
+/* Disable defaults runnable and scroll-range ticks to let visualizer draw completely */
+.range-slider-wrapper .range-slider-input::-webkit-slider-runnable-track {
+  background: transparent !important;
+  border: none !important;
+}
+.range-slider-wrapper .range-slider-input::-moz-range-track {
+  background: transparent !important;
+  border: none !important;
+}

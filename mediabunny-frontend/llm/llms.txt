@@ -1,0 +1,95 @@
+# Mediabunny
+
+> Complete media toolkit
+
+A JavaScript library for reading, writing, and converting video and audio files. Directly in the browser, and faster than anybunny else.
+
+## Table of Contents
+
+### Getting started
+
+- [Introduction](/guide/introduction.md): Mediabunny is a zero-dependency, tree-shakable TypeScript library for reading, writing and converting media files in the browser. Like FFmpeg, but for the web.
+- [Installation](/guide/installation.md): Install Mediabunny using npm (or your favorite package manager), or include it directly as a <script> tag.
+- [Quick start](/guide/quick-start.md): A collection of short code snippets that showcase the most common operations that Mediabunny can do.
+
+### Reading
+
+- [Reading media files](/guide/reading-media-files.md): Efficiently extract metadata, video frames, and audio samples from any media file, such as MP4 or WebM.
+- [Media sinks](/guide/media-sinks.md): Media sinks enable different ways to extract video and audio data from files, from built-in decoding to manual per-packet control.
+- [Input formats](/guide/input-formats.md): Mediabunny supports a wide range of media input formats, such as MP4, WebM, MP3, HLS, and many more.
+
+### Writing
+
+- [Writing media files](/guide/writing-media-files.md): Use Mediabunny to create new video and audio files of any size directly in the browser, and with full control over frame timing, tracks, and more.
+- [Media sources](/guide/media-sources.md): Media sources enable multiple ways to add media data to new media files, from built-in encoding to manual per-packet control.
+- [Output formats](/guide/output-formats.md): Mediabunny can write a wide range of media output formats, including MP4, WebM, MP3, HLS, and many more.
+
+### Conversion
+
+- [Converting media files](/guide/converting-media-files.md): Efficiently convert any media file to any format, directly in the browser. Optionally apply trimming, video resizing, rotation, custom overlays, and more.
+
+### Miscellaneous
+
+- [Packets & samples](/guide/packets-and-samples.md): Learn about how packets carry encoded media data, samples carry raw decoded media data, and the operations you can perform on them.
+- [Supported formats & codecs](/guide/supported-formats-and-codecs.md): Mediabunny supports a wide range of media container formats (.mp4, .webm, .mp3, .wav, .m3u8, ...) and video/audio codecs (H.264, HEVC, VP9, AV1, AAC, Opus, FLAC, ...).
+
+### HLS
+
+- [Reading HLS](/guide/reading-hls.md): Use Mediabunny to read HLS (.m3u8) playlists, both VOD and live. Extract tracks, metadata, and media data efficiently and with precise control.
+- [Writing HLS](/guide/writing-hls.md): Mediabunny can create new HLS (.m3u8) playlists directly in the browser, both VOD and live. Define tracks, add media data, and upload directly to a server.
+
+### Extensions
+
+- [@mediabunny/server](/guide/extensions/server.md): Add full video and audio decoder and encoder support for use in server-side environments, like Node, Bun, or Deno.
+- [@mediabunny/mp3-encoder](/guide/extensions/mp3-encoder.md): The @mediabunny/mp3-encoder extension provides a highly-performant MP3 encoder polyfill for use in the browser and on the server.
+- [@mediabunny/aac-encoder](/guide/extensions/aac-encoder.md): The @mediabunny/aac-encoder extension provides a fast AAC encoder polyfill for use in the browser and on the server.
+- [@mediabunny/ac3](/guide/extensions/ac3.md): The @mediabunny/ac3 extension provides fast AC-3 and E-AC-3 decoders and encoders for both browser and server environments.
+- [@mediabunny/flac-encoder](/guide/extensions/flac-encoder.md): The @mediabunny/flac-encoder extension provides a highly-performant FLAC encoder polyfill for use in the browser and on the server.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Codec registry
+
+- [Mediabunny Codec Registry](/codec-registry/overview.md): The Mediabunny Codec Registry formalizes the precise definitions of all video and audio codecs supported by Mediabunny, like expected codec string and packet data format.
+
+### Video
+
+- [AVC (H.264) codec registration](/codec-registry/avc.md): Advanced Video Coding (H.264) video codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [HEVC (H.265) codec registration](/codec-registry/hevc.md): High Efficiency Video Coding (H.265) video codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [VP8 codec registration](/codec-registry/vp8.md): VP8 video codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [VP9 codec registration](/codec-registry/vp9.md): VP9 video codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [AV1 codec registration](/codec-registry/av1.md): AOMedia Video 1 (AV1) video codec definition, defining legal codec strings, decoder configs, and packet data formats.
+
+### Audio
+
+- [AAC codec registration](/codec-registry/aac.md): Advanced Audio Coding (AAC) audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [Opus codec registration](/codec-registry/opus.md): Opus audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [MP3 codec registration](/codec-registry/mp3.md): MP3 (MPEG-1/2 Audio Layer III) audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [Vorbis codec registration](/codec-registry/vorbis.md): Vorbis audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [FLAC codec registration](/codec-registry/flac.md): Free Lossless Audio Codec (FLAC) audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [AC-3 codec registration](/codec-registry/ac3.md): Dolby Digital (AC-3) audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [E-AC-3 codec registration](/codec-registry/eac3.md): Dolby Digital Plus (E-AC-3) audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [Linear PCM codecs registration](/codec-registry/pcm.md): PCM audio codec definitions, defining legal codec strings, decoder configs, and packet data formats.
+- [μ-law PCM codec registration](/codec-registry/ulaw.md): μ-law companded PCM audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+- [A-law PCM codec registration](/codec-registry/alaw.md): A-law companded PCM audio codec definition, defining legal codec strings, decoder configs, and packet data formats.
+

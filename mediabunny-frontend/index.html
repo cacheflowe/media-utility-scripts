@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🐰 MediaBunny Video Toolkit</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="container">
+    <!-- Nav bar with Brand Title and Theme Toggle -->
+    <nav class="brand-nav">
+      <ul>
+        <li>
+          <strong>🐰 MediaBunny</strong>
+          <span
+            style="
+              font-size: 0.8rem;
+              opacity: 0.8;
+              margin-left: 0.5rem;
+              border: 1px solid currentColor;
+              padding: 2px 6px;
+              border-radius: 4px;
+            "
+            >Frontend Media Converter</span
+          >
+        </li>
+      </ul>
+      <ul>
+        <li>
+          <a
+            href="https://github.com/cacheflowe/media-utility-scripts"
+            target="_blank"
+            class="secondary"
+            style="font-size: 0.9rem"
+            >Scripts Repository</a
+          >
+        </li>
+        <li>
+          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
+            <!-- Moon Icon (Dark Mode active, click to light) -->
+            <svg
+              id="theme-icon-moon"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
+              />
+            </svg>
+            <!-- Sun Icon (Light Mode active, click to dark, hidden by default in JS) -->
+            <svg
+              id="theme-icon-sun"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              style="display: none"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 3v2.25m0 13.5V21M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M3 12h2.25m13.5 0H21M6.34 17.66l-1.42 1.42m12.72-12.72l-1.42 1.42M12 7.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9z"
+              />
+            </svg>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <main>
+      <!-- Dropzone Card -->
+      <div id="dropzone" role="button" tabindex="0">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
+          />
+        </svg>
+        <h3>Drag & Drop video file here</h3>
+        <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--pico-muted-color)">
+          or click to select a file from your device
+        </p>
+        <small style="font-size: 0.8rem; opacity: 0.7">Supports standard MP4, WebM, MOV, and AVI containers</small>
+        <input type="file" id="video-file-input" accept="video/*" />
+      </div>
+
+      <!-- Active Workspace / Loaded File info -->
+      <section id="loaded-file-section" style="display: none">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1rem">🎥 Source Video Workshop</h2>
+
+        <div class="workshop-layout">
+          <!-- Left Column: Media Preview & Properties -->
+          <div class="workshop-sidebar">
+            <!-- Live Video Preview & Seeking -->
+            <article style="padding: 1rem; margin-bottom: 0">
+              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+                Original Video Player
+              </header>
+              <div class="video-container">
+                <video id="preview-video" controls muted playsinline></video>
+              </div>
+              <small style="display: block; text-align: center; margin-top: 0.5rem; color: var(--pico-muted-color)">
+                💡 Use player's controls or sliders to scrub frames for cutouts
+              </small>
+            </article>
+
+            <!-- Source Video Properties -->
+            <article style="padding: 1rem; margin-bottom: 0">
+              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+                Attributes & Metadata
+              </header>
+
+              <div class="meta-grid">
+                <div class="meta-item">
+                  <span class="meta-label">File Name</span>
+                  <span id="meta-name" style="word-break: break-all; font-weight: 500">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">File Size</span>
+                  <span id="meta-size">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Duration</span>
+                  <span id="meta-duration">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Resolution</span>
+                  <span id="meta-resolution">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Aspect Ratio</span>
+                  <span id="meta-aspect">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Video Codec</span>
+                  <span id="meta-vcodec">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Audio Tracks</span>
+                  <span id="meta-atrack">-</span>
+                </div>
+              </div>
+
+              <div
+                style="
+                  background-color: var(--pico-card-sectioning-background-color);
+                  border: 1px solid var(--pico-muted-border-color);
+                  border-radius: 6px;
+                  padding: 0.75rem;
+                "
+              >
+                <strong style="font-size: 0.85rem; display: block; margin-bottom: 0.25rem"
+                  >📝 Embedded Metadata Tags</strong
+                >
+                <pre id="meta-tags" style="margin: 0; font-size: 0.8rem; max-height: 120px; overflow-y: auto">
+None detected</pre
+                >
+              </div>
+            </article>
+          </div>
+
+          <!-- Right Column: Settings & Operational Blocks -->
+          <div class="workshop-main">
+            <!-- Settings & Form Options Block -->
+            <form id="conversion-form" style="margin-bottom: 0">
+              <!-- Stacked Settings Options (No Sub-grids) -->
+              <div style="display: flex; flex-direction: column; gap: 1.5rem">
+                <!-- Box 1: Crop and Trim -->
+                <article class="config-card" style="margin-bottom: 0">
+                  <header class="card-header">✂️ Time Crop & Trim</header>
+
+                  <fieldset>
+                    <label for="enable-trim">
+                      <input type="checkbox" id="enable-trim" name="enable-trim" />
+                      Enable Trimming / Time Crop
+                    </label>
+                  </fieldset>
+
+                  <div id="trim-controls-group" style="display: none; padding-top: 0.5rem">
+                    <div class="slider-group" style="margin-bottom: 0.5rem">
+                      <div
+                        style="
+                          display: flex;
+                          justify-content: space-between;
+                          align-items: center;
+                          margin-bottom: 0.5rem;
+                        "
+                      >
+                        <span style="font-weight: 500; font-size: 0.9rem">Cut / Clip Window Range:</span>
+                        <span class="time-val" style="font-family: monospace; font-size: 0.85rem; padding: 2px 6px">
+                          <span id="trim-start-val" style="font-weight: bold; color: var(--primary-color)">0.00s</span>
+                          to
+                          <span id="trim-end-val" style="font-weight: bold; color: var(--primary-color)">10.00s</span>
+                        </span>
+                      </div>
+
+                      <div class="range-slider-wrapper">
+                        <div class="trim-visualizer">
+                          <div class="trim-selection" id="trim-selection-bar"></div>
+                        </div>
+                        <input
+                          type="range"
+                          id="trim-start"
+                          class="range-slider-input"
+                          name="trim-start"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value="0"
+                          style="z-index: 3"
+                        />
+                        <input
+                          type="range"
+                          id="trim-end"
+                          class="range-slider-input"
+                          name="trim-end"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value="100"
+                          style="z-index: 2"
+                        />
+                      </div>
+
+                      <small
+                        style="
+                          display: block;
+                          color: var(--pico-muted-color);
+                          text-align: center;
+                          margin-top: 0.25rem;
+                          font-size: 0.75rem;
+                        "
+                      >
+                        💡 Drag the left/right handles above to set your trimming window.
+                      </small>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Box 2: Aspect and Dimension Resizing -->
+                <article class="config-card" style="margin-bottom: 0">
+                  <header class="card-header">📐 Resolution & Aspect Ratio Resize</header>
+
+                  <fieldset>
+                    <label for="enable-resize">
+                      <input type="checkbox" id="enable-resize" name="enable-resize" />
+                      Enable Video Resizing
+                    </label>
+                  </fieldset>
+
+                  <div id="resize-controls-group" style="display: none; padding-top: 0.5rem">
+                    <fieldset>
+                      <label for="resize-preset">Preset Dimensions</label>
+                      <select id="resize-preset" name="resize-preset">
+                        <option value="custom" selected>Custom Size</option>
+                        <option value="1920">1080p Full HD (Max 1920px)</option>
+                        <option value="1280">720p HD (Max 1280px)</option>
+                        <option value="854">480p SD (Max 854px)</option>
+                        <option value="640">360p (Max 640px)</option>
+                        <option value="square-1080">Square 1:1 HD (1080x1080)</option>
+                        <option value="square-720">Square 1:1 Standard (720x720)</option>
+                      </select>
+                    </fieldset>
+
+                    <div class="grid" style="margin-bottom: 0.5rem">
+                      <div>
+                        <label for="resize-width">Width (px)</label>
+                        <input
+                          type="number"
+                          id="resize-width"
+                          name="resize-width"
+                          min="16"
+                          placeholder="Original Width"
+                        />
+                      </div>
+                      <div>
+                        <label for="resize-height">Height (px)</label>
+                        <input
+                          type="number"
+                          id="resize-height"
+                          name="resize-height"
+                          min="16"
+                          placeholder="Original Height"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="grid" style="align-items: center; margin-top: 0.5rem">
+                      <div>
+                        <label for="preserve-aspect">
+                          <input type="checkbox" id="preserve-aspect" name="preserve-aspect" checked />
+                          Lock Aspect Ratio
+                        </label>
+                      </div>
+                      <div>
+                        <label for="resize-fit">Fit Mode</label>
+                        <select id="resize-fit" name="resize-fit">
+                          <option value="fill">Fill (Stretch)</option>
+                          <option value="contain" selected>Contain (Letterbox)</option>
+                          <option value="cover">Cover (Crop)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+              <!-- Stacked Box 1 & 2 -->
+
+              <!-- Box 3 & 4 (Also Stacked Vertically, No Grid Gap) -->
+              <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.5rem">
+                <!-- Box 3: Container Output & Video Options -->
+                <article class="config-card" style="margin-bottom: 0">
+                  <header class="card-header">💿 Output Profile & Video Compressor</header>
+
+                  <div class="grid">
+                    <div>
+                      <label for="out-format">Output Format / Container</label>
+                      <select id="out-format" name="out-format">
+                        <option value="mp4" selected>MP4 (.mp4) - Most Compatible</option>
+                        <option value="webm">WebM (.webm) - Modern Open-Source</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label for="out-vcodec">Video Encoder Codec</label>
+                      <select id="out-vcodec" name="out-vcodec">
+                        <option value="avc" selected>H.264 / AVC (High compatibility)</option>
+                        <option value="hevc">H.265 / HEVC (High compression)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Subjective Quality Slider & Bitrate Mode -->
+                  <div class="slider-group" style="margin-top: 0.5rem">
+                    <label for="out-quality">
+                      <span>Video Compression (Subjective Quality):</span>
+                      <span
+                        class="time-val"
+                        id="out-quality-val"
+                        style="background-color: var(--pico-primary-background); color: var(--pico-primary-inverse)"
+                        >Medium</span
+                      >
+                    </label>
+                    <input type="range" id="out-quality" name="out-quality" min="1" max="5" value="3" step="1" />
+                    <span
+                      id="quality-help"
+                      style="font-size: 0.8rem; display: block; color: var(--pico-muted-color); margin-top: 0.25rem"
+                    >
+                      Balanced bitrate and visual fidelity for typical social/web sharing.
+                    </span>
+
+                    <!-- Surfaced compression details -->
+                    <div
+                      style="
+                        margin-top: 0.75rem;
+                        background: rgba(0, 0, 0, 0.15);
+                        border: 1px solid var(--pico-muted-border-color);
+                        border-radius: 6px;
+                        padding: 0.5rem 0.75rem;
+                        font-size: 0.78rem;
+                      "
+                    >
+                      <strong style="display: block; margin-bottom: 0.35rem"
+                        >📊 Preset Bitrate Guidelines (based on standard 1080p):</strong
+                      >
+                      <ul style="margin: 0; padding-left: 1.15rem; color: var(--pico-muted-color)">
+                        <li>Very Low: ~600 kbps (Extreme compression / tiny size)</li>
+                        <li>Low: ~1.5 Mbps (Optimized for cell-network previews)</li>
+                        <li>Medium: ~3.5 Mbps (Standard social / balanced sharing)</li>
+                        <li>High: ~7.5 Mbps (Clear high-fidelity HD viewing)</li>
+                        <li>Very High: ~15 Mbps (Lossless retention of original frames)</li>
+                      </ul>
+                    </div>
+
+                    <!-- Custom Bitrate Override Option -->
+                    <div
+                      style="
+                        margin-top: 1rem;
+                        border-top: 1px dashed var(--pico-muted-border-color);
+                        padding-top: 0.75rem;
+                      "
+                    >
+                      <label for="use-custom-bitrate">
+                        <input type="checkbox" id="use-custom-bitrate" name="use-custom-bitrate" />
+                        🔧 Use Explicit Target Bitrate Override
+                      </label>
+                      <div id="custom-bitrate-group" style="display: none; margin-top: 0.6rem">
+                        <div class="grid" style="align-items: center; margin-bottom: 0">
+                          <div>
+                            <label for="custom-bitrate" style="font-size: 0.8rem">Target Bitrate (bps):</label>
+                            <input
+                              type="number"
+                              id="custom-bitrate"
+                              name="custom-bitrate"
+                              placeholder="e.g. 3500000"
+                              min="100000"
+                              step="50000"
+                              value="3500000"
+                              style="margin-bottom: 0"
+                            />
+                          </div>
+                          <div style="display: flex; align-items: flex-end; padding-top: 1.4rem">
+                            <span
+                              class="time-val"
+                              id="custom-bitrate-mbps-label"
+                              style="
+                                font-family: monospace;
+                                font-size: 0.85rem;
+                                font-weight: bold;
+                                background: var(--pico-code-background-color);
+                                padding: 8px 12px;
+                                border-radius: 4px;
+                                display: inline-block;
+                              "
+                              >3.50 Mbps</span
+                            >
+                          </div>
+                        </div>
+                        <small style="display: block; color: var(--pico-muted-color); margin-top: 0.25rem">
+                          💡 Provide standard bits per second (e.g. 5,000,000 is 5.0 Mbps, 800,000 is 800 kbps).
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Advanced Speed features -->
+                  <div
+                    style="
+                      border-top: 1px solid var(--pico-muted-border-color);
+                      padding-top: 0.75rem;
+                      margin-top: 0.75rem;
+                    "
+                  >
+                    <fieldset style="margin-bottom: 0">
+                      <label for="fast-copy-tag">
+                        <input type="checkbox" id="fast-copy-tag" name="fast-copy-tag" />
+                        ⚡ Fast Copy Mode (Only Trim, No Re-encoding)
+                      </label>
+                      <span
+                        class="help-text"
+                        style="
+                          font-size: 0.75rem;
+                          color: var(--pico-muted-color);
+                          display: block;
+                          margin-top: -0.25rem;
+                          margin-left: 1.5rem;
+                        "
+                      >
+                        Useful for trimming/clipping files instantly. Discards dimension resizes and forces codec
+                        copies. Recommended if you only cut duration.
+                      </span>
+                    </fieldset>
+                  </div>
+
+                  <!-- Rotation corrections & metadata -->
+                  <div class="grid" style="margin-top: 1rem; align-items: center">
+                    <div>
+                      <label for="rotate-correction">Rotation Correction</label>
+                      <select id="rotate-correction" name="rotate-correction">
+                        <option value="0" selected>0° (Keep natural state)</option>
+                        <option value="90">90° Clockwise</option>
+                        <option value="180">180° Half-flip</option>
+                        <option value="270">270° Counter-Clockwise</option>
+                      </select>
+                    </div>
+                    <div>
+                      <fieldset style="margin-bottom: 0; padding-top: 1.25rem">
+                        <label for="allow-rot-metadata">
+                          <input type="checkbox" id="allow-rot-metadata" name="allow-rot-metadata" checked />
+                          Allow Rotation Metadata
+                        </label>
+                      </fieldset>
+                    </div>
+                  </div>
+                </article>
+
+                <!-- Box 4: Audio Track Handling -->
+                <article class="config-card" style="margin-bottom: 0">
+                  <header class="card-header">🔊 Audio Stream Handlers</header>
+
+                  <fieldset>
+                    <legend style="font-weight: 500; font-size: 0.95rem; margin-bottom: 0.5rem">
+                      Audio Mode Select
+                    </legend>
+                    <label for="audio-mode-copy">
+                      <input type="radio" id="audio-mode-copy" name="audio-mode" value="copy" checked />
+                      ⚡ Retain Original Audio Stream (Raw Copy)
+                    </label>
+                    <label for="audio-mode-transcode">
+                      <input type="radio" id="audio-mode-transcode" name="audio-mode" value="transcode" />
+                      ⚙️ Transcode / Convert Audio
+                    </label>
+                    <label for="audio-mode-mute">
+                      <input type="radio" id="audio-mode-mute" name="audio-mode" value="mute" />
+                      🔇 Strip Audio Track (Mute Video)
+                    </label>
+                  </fieldset>
+
+                  <div
+                    id="audio-transcode-controls"
+                    style="
+                      display: none;
+                      border-top: 1px solid var(--pico-muted-border-color);
+                      padding-top: 1rem;
+                      margin-top: 0.5rem;
+                    "
+                  >
+                    <div class="grid" style="margin-bottom: 0.5rem">
+                      <div>
+                        <label for="audio-codec">Audio Codec</label>
+                        <select id="audio-codec" name="audio-codec">
+                          <option value="aac" selected>AAC (Highly compatible)</option>
+                          <option value="opus">Opus (High quality, lower bitrate)</option>
+                          <option value="mp3">MP3</option>
+                          <option value="flac">FLAC (Lossless)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label for="audio-bitrate">Bitrate</label>
+                        <select id="audio-bitrate" name="audio-bitrate">
+                          <option value="64000">64 kbps (Mobile optimization)</option>
+                          <option value="128000" selected>128 kbps (Balanced)</option>
+                          <option value="192000">192 kbps (High Fidelity)</option>
+                          <option value="320000">320 kbps (Premium)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="grid" style="margin-bottom: 0">
+                      <div>
+                        <label for="audio-channels">Channels</label>
+                        <select id="audio-channels" name="audio-channels">
+                          <option value="0" selected>Original Channels</option>
+                          <option value="1">1 (Mono)</option>
+                          <option value="2">2 (Stereo)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label for="audio-samplerate">Sample Rate</label>
+                        <select id="audio-samplerate" name="audio-samplerate">
+                          <option value="0" selected>Original Sample Rate</option>
+                          <option value="44100">44,100 Hz</option>
+                          <option value="48000">48,000 Hz</option>
+                          <option value="32000">32,000 Hz</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+              <!-- Stacked Box 3 & 4 -->
+
+              <!-- conversion execution grid -->
+              <div style="margin-top: 1.5rem; text-align: center">
+                <button
+                  type="submit"
+                  id="convert-btn"
+                  class="contrast"
+                  style="max-width: 450px; font-weight: bold; font-size: 1.1rem; padding: 0.8rem 2rem"
+                >
+                  🚀 Convert & Process Video File
+                </button>
+                <button
+                  type="button"
+                  id="cancel-btn"
+                  class="secondary"
+                  style="display: none; max-width: 450px; font-weight: bold; font-size: 1.1rem; padding: 0.8rem 2rem"
+                >
+                  🛑 Cancel Conversion
+                </button>
+              </div>
+            </form>
+          </div>
+          <!-- .workshop-main -->
+        </div>
+        <!-- .workshop-layout -->
+      </section>
+
+      <!-- Transcoding Live Progress Section -->
+      <section id="progress-section" style="display: none; margin-top: 2rem">
+        <article>
+          <h4 style="margin-bottom: 0.5rem; display: flex; justify-content: space-between">
+            <span id="progress-title">🐰 Processing Video Sample...</span>
+            <strong id="progress-percentage">0%</strong>
+          </h4>
+          <progress id="conversion-progress" value="0" max="100"></progress>
+          <div
+            style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--pico-muted-color)"
+          >
+            <span id="progress-time-processed">Processed Time: 0s / 0s</span>
+            <span id="progress-speed">Processing speed: Normal</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Final Result Presentation Block -->
+      <section id="result-section" style="display: none; margin-top: 2rem">
+        <ins
+          style="
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgb(46, 204, 113);
+            display: block;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+          "
+        >
+          <h3 style="color: rgb(46, 204, 113); margin-bottom: 0.5rem">🎉 Success! Conversion Completed Successfully</h3>
+          <p style="margin-bottom: 1rem; font-size: 0.95rem">
+            Your media has been processed on-the-fly and packaged directly in your browser. No server uploads occurred.
+          </p>
+
+          <div class="grid" style="align-items: center; margin-bottom: 0">
+            <div>
+              <a
+                href="#"
+                id="download-anchor"
+                download="mediabunny_result.mp4"
+                class="button"
+                style="border: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                  />
+                </svg>
+                <span>Download Processed Video</span>
+              </a>
+              <span id="output-size-tag" style="margin-left: 1rem; font-size: 0.9rem; font-weight: bold; opacity: 0.85"
+                >-</span
+              >
+            </div>
+          </div>
+        </ins>
+
+        <!-- Side-by-side Players comparisons -->
+        <div class="grid" style="margin-top: 2rem">
+          <article style="padding: 1rem; border: 1px dashed var(--pico-muted-border-color)">
+            <header
+              class="card-header"
+              style="
+                margin-top: -1rem;
+                margin-left: -1rem;
+                margin-right: -1rem;
+                background: var(--pico-card-background-color);
+              "
+            >
+              Original Video
+            </header>
+            <div class="video-container">
+              <video id="original-compare-video" controls muted></video>
+            </div>
+          </article>
+
+          <article style="padding: 1rem; border: 1px solid rgb(46, 204, 113)">
+            <header
+              class="card-header"
+              style="
+                margin-top: -1rem;
+                margin-left: -1rem;
+                margin-right: -1rem;
+                background: rgba(46, 204, 113, 0.05);
+                color: rgb(46, 204, 113);
+              "
+            >
+              Processed Output
+            </header>
+            <div class="video-container">
+              <video id="output-video" controls autoplay></video>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Transcoding Terminal Log Outputs details -->
+      <section style="margin-top: 3.5rem; margin-bottom: 4rem">
+        <details>
+          <summary style="font-weight: 500; font-size: 0.95rem; cursor: pointer">
+            🔍 System Console & Transcoding logs (verbose)
+          </summary>
+          <div style="margin-top: 1rem; position: relative">
+            <button
+              id="clear-console-btn"
+              class="outline secondary"
+              style="
+                position: absolute;
+                right: 10px;
+                top: 10px;
+                font-size: 0.7rem;
+                padding: 4px 10px;
+                margin: 0;
+                width: auto;
+              "
+            >
+              Clear Log
+            </button>
+            <pre id="log-console">System diagnostic logger initialized. Waiting for media file drop...</pre>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer
+      style="
+        margin-top: 4rem;
+        padding: 1.5rem 0;
+        border-top: 1px solid var(--pico-muted-border-color);
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--pico-muted-color);
+      "
+    >
+      <p>🏎️ Powered by <strong>WebCodecs</strong> & <strong>MediaBunny</strong>. 100% In-Browser & Privacy Focus.</p>
+    </footer>
+
+    <!-- Include App Logic -->
+    <script type="module" src="/src/app.ts"></script>
+  </body>
+</html>
