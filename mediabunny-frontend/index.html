@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🐰 MediaBunny Video Toolkit</title>
+    <title>🐰 MediaBunny Media Toolkit</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body class="container">
@@ -91,19 +91,21 @@
             d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
           />
         </svg>
-        <h3>Drag & Drop video file here</h3>
+        <h3>Drag & Drop media file here</h3>
         <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--pico-muted-color)">
           or click to select a file from your device
         </p>
-        <small style="font-size: 0.8rem; opacity: 0.7">Supports standard MP4, WebM, MOV, and AVI containers</small>
-        <input type="file" id="video-file-input" accept="video/*" />
+        <small style="font-size: 0.8rem; opacity: 0.7"
+          >Supports video (MP4, WebM, MOV) and images (PNG, JPG, WebP, AVIF)</small
+        >
+        <input type="file" id="video-file-input" accept="video/*,image/*" />
       </div>
 
       <!-- Active Workspace / Loaded File info -->
       <section id="loaded-file-section" style="display: none">
-        <h2 style="font-size: 1.5rem; margin-bottom: 1rem">🎥 Source Video Workshop</h2>
+        <h2 style="font-size: 1.5rem; margin-bottom: 1rem">🎬 Source Media Workshop</h2>
 
-        <div class="workshop-layout">
+        <div id="video-workspace" class="workshop-layout">
           <!-- Left Column: Media Preview & Properties -->
           <div class="workshop-sidebar">
             <!-- Live Video Preview & Seeking -->
@@ -636,6 +638,224 @@ None detected</pre
           <!-- .workshop-main -->
         </div>
         <!-- .workshop-layout -->
+
+        <div id="image-workspace" class="workshop-layout" style="display: none">
+          <div class="workshop-sidebar">
+            <article style="padding: 1rem; margin-bottom: 0">
+              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+                Image Preview & Blur Paint Mask
+              </header>
+              <div class="image-toolbar">
+                <label for="img-canvas-tool" style="margin: 0">Canvas Tool</label>
+                <select id="img-canvas-tool" style="margin: 0">
+                  <option value="crop" selected>Crop Box</option>
+                  <option value="paint">Paint Redaction</option>
+                </select>
+                <span id="img-canvas-tool-badge" class="tool-badge tool-badge-crop">Current: Crop Box</span>
+              </div>
+              <div class="image-canvas-stage" id="image-canvas-stage">
+                <canvas id="image-preview-canvas"></canvas>
+                <canvas id="image-mask-canvas"></canvas>
+              </div>
+              <small style="display: block; text-align: center; margin-top: 0.5rem; color: var(--pico-muted-color)">
+                Switch between crop and paint tools. Drag crop corners directly on the preview, or paint redactions over
+                sensitive areas.
+              </small>
+            </article>
+
+            <article style="padding: 1rem; margin-bottom: 0">
+              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+                Image Attributes
+              </header>
+              <div class="meta-grid">
+                <div class="meta-item">
+                  <span class="meta-label">File Name</span>
+                  <span id="img-meta-name" style="word-break: break-all; font-weight: 500">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">File Size</span>
+                  <span id="img-meta-size">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Original Size</span>
+                  <span id="img-meta-resolution">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Aspect Ratio</span>
+                  <span id="img-meta-aspect">-</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">Detected Type</span>
+                  <span id="img-meta-type">-</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="workshop-main">
+            <form id="image-form" style="margin-bottom: 0">
+              <article class="config-card" style="margin-bottom: 0">
+                <header class="card-header">✂️ Crop Region</header>
+                <fieldset>
+                  <label for="img-enable-crop">
+                    <input type="checkbox" id="img-enable-crop" checked />
+                    Enable Crop
+                  </label>
+                </fieldset>
+                <div class="grid" style="margin-bottom: 0.5rem">
+                  <div>
+                    <label for="img-crop-x">X</label>
+                    <input type="number" id="img-crop-x" min="0" value="0" />
+                  </div>
+                  <div>
+                    <label for="img-crop-y">Y</label>
+                    <input type="number" id="img-crop-y" min="0" value="0" />
+                  </div>
+                </div>
+                <div class="grid" style="margin-bottom: 0.5rem">
+                  <div>
+                    <label for="img-crop-width">Crop Width</label>
+                    <input type="number" id="img-crop-width" min="1" value="1" />
+                  </div>
+                  <div>
+                    <label for="img-crop-height">Crop Height</label>
+                    <input type="number" id="img-crop-height" min="1" value="1" />
+                  </div>
+                </div>
+                <div class="grid" style="margin-bottom: 0">
+                  <button type="button" id="img-crop-full" class="secondary">Use Full Image</button>
+                  <button type="button" id="img-crop-square" class="secondary">Centered Square</button>
+                </div>
+              </article>
+
+              <article class="config-card" style="margin-bottom: 0; margin-top: 1.5rem">
+                <header class="card-header">📐 Output Resize</header>
+                <fieldset>
+                  <label for="img-enable-resize">
+                    <input type="checkbox" id="img-enable-resize" />
+                    Enable Resize
+                  </label>
+                </fieldset>
+                <div class="grid" style="margin-bottom: 0.5rem">
+                  <div>
+                    <label for="img-out-width">Output Width</label>
+                    <input type="number" id="img-out-width" min="1" value="1" />
+                  </div>
+                  <div>
+                    <label for="img-out-height">Output Height</label>
+                    <input type="number" id="img-out-height" min="1" value="1" />
+                  </div>
+                </div>
+                <div class="grid" style="margin-bottom: 0.5rem">
+                  <div>
+                    <label for="img-scale-preset">Scale Preset</label>
+                    <select id="img-scale-preset">
+                      <option value="" selected>Select scale...</option>
+                      <option value="0.25">25% (0.25x)</option>
+                      <option value="0.5">50% (0.5x)</option>
+                      <option value="0.75">75% (0.75x)</option>
+                      <option value="1">100% (1x)</option>
+                      <option value="1.25">125% (1.25x)</option>
+                      <option value="1.5">150% (1.5x)</option>
+                      <option value="2">200% (2x)</option>
+                      <option value="3">300% (3x)</option>
+                      <option value="4">400% (4x)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="img-maxdim-preset">Max Dimension Preset</label>
+                    <select id="img-maxdim-preset">
+                      <option value="" selected>Fit longest side to...</option>
+                      <option value="256">256 px (2^8)</option>
+                      <option value="512">512 px (2^9)</option>
+                      <option value="720">720 px</option>
+                      <option value="1024">1024 px (2^10)</option>
+                      <option value="1080">1080 px</option>
+                      <option value="1280">1280 px</option>
+                      <option value="1920">1920 px</option>
+                      <option value="2048">2048 px (2^11)</option>
+                      <option value="2560">2560 px</option>
+                      <option value="3840">3840 px</option>
+                      <option value="4096">4096 px (2^12)</option>
+                    </select>
+                  </div>
+                </div>
+                <fieldset>
+                  <label for="img-lock-aspect">
+                    <input type="checkbox" id="img-lock-aspect" checked />
+                    Lock Aspect Ratio
+                  </label>
+                </fieldset>
+              </article>
+
+              <article class="config-card" style="margin-bottom: 0; margin-top: 1.5rem">
+                <header class="card-header">🫥 Redaction Brush</header>
+                <fieldset>
+                  <label for="img-enable-blur">
+                    <input type="checkbox" id="img-enable-blur" checked />
+                    Enable Redaction Mask Painting
+                  </label>
+                </fieldset>
+                <div class="grid" style="margin-bottom: 0.5rem">
+                  <div>
+                    <label for="img-redaction-mode">Redaction Effect</label>
+                    <select id="img-redaction-mode">
+                      <option value="blur" selected>Blur</option>
+                      <option value="pixelate">Pixelate</option>
+                      <option value="black">Solid Black</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="img-brush-size">Brush Size (px)</label>
+                    <input type="range" id="img-brush-size" min="8" max="180" value="40" step="1" />
+                  </div>
+                  <div>
+                    <label for="img-blur-strength">Effect Strength</label>
+                    <input type="range" id="img-blur-strength" min="2" max="9" value="4" step="1" />
+                  </div>
+                </div>
+                <div class="grid" style="margin-bottom: 0">
+                  <label for="img-erase-mode" style="align-self: center; margin-bottom: 0">
+                    <input type="checkbox" id="img-erase-mode" />
+                    Erase Mask Mode
+                  </label>
+                  <button type="button" id="img-clear-mask" class="secondary">Clear Blur Mask</button>
+                </div>
+              </article>
+
+              <article class="config-card" style="margin-bottom: 0; margin-top: 1.5rem">
+                <header class="card-header">💾 Format & Compression</header>
+                <div class="grid" style="margin-bottom: 0.5rem">
+                  <div>
+                    <label for="img-out-format">Output Format</label>
+                    <select id="img-out-format">
+                      <option value="image/jpeg" selected>JPEG (.jpg)</option>
+                      <option value="image/png">PNG (.png, lossless)</option>
+                      <option value="image/webp">WebP (.webp)</option>
+                      <option value="image/avif">AVIF (.avif)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="img-quality">Compression Quality</label>
+                    <input type="range" id="img-quality" min="0.1" max="1" value="0.86" step="0.01" />
+                    <small id="img-quality-label">0.86</small>
+                  </div>
+                </div>
+              </article>
+
+              <div style="margin-top: 1.5rem; text-align: center">
+                <button
+                  type="submit"
+                  id="image-process-btn"
+                  class="contrast"
+                  style="max-width: 450px; font-weight: bold; font-size: 1.1rem; padding: 0.8rem 2rem"
+                >
+                  🖼️ Process & Export Image
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </section>
 
       <!-- Transcoding Live Progress Section -->
@@ -742,6 +962,92 @@ None detected</pre
             </div>
           </article>
         </div>
+      </section>
+
+      <section id="image-result-section" style="display: none; margin-top: 2rem">
+        <ins
+          style="
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgb(46, 204, 113);
+            display: block;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+          "
+        >
+          <h3 style="color: rgb(46, 204, 113); margin-bottom: 0.5rem">🎉 Image Ready</h3>
+          <p style="margin-bottom: 1rem; font-size: 0.95rem">
+            Your image was cropped, redacted, scaled, and re-encoded directly in browser memory.
+          </p>
+          <div class="grid" style="align-items: center; margin-bottom: 0">
+            <div>
+              <a
+                href="#"
+                id="image-download-anchor"
+                download="processed-image.jpg"
+                class="button"
+                style="border: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px"
+              >
+                Download Processed Image
+              </a>
+              <span
+                id="image-output-size-tag"
+                style="margin-left: 1rem; font-size: 0.9rem; font-weight: bold; opacity: 0.85"
+                >-</span
+              >
+            </div>
+          </div>
+        </ins>
+
+        <div class="grid" style="margin-top: 2rem">
+          <article style="padding: 1rem; border: 1px dashed var(--pico-muted-border-color)">
+            <header
+              class="card-header"
+              style="
+                margin-top: -1rem;
+                margin-left: -1rem;
+                margin-right: -1rem;
+                background: var(--pico-card-background-color);
+              "
+            >
+              Original Image
+            </header>
+            <img id="image-original-preview" alt="Original image" style="width: 100%; height: auto; display: block" />
+          </article>
+
+          <article style="padding: 1rem; border: 1px solid rgb(46, 204, 113)">
+            <header
+              class="card-header"
+              style="
+                margin-top: -1rem;
+                margin-left: -1rem;
+                margin-right: -1rem;
+                background: rgba(46, 204, 113, 0.05);
+                color: rgb(46, 204, 113);
+              "
+            >
+              Processed Image
+            </header>
+            <img id="image-output-preview" alt="Processed image" style="width: 100%; height: auto; display: block" />
+          </article>
+        </div>
+      </section>
+
+      <section style="margin-top: 2rem; margin-bottom: 0.5rem">
+        <article style="padding: 1rem; border: 1px solid var(--pico-muted-border-color)">
+          <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+            Post-process with Local Tools
+          </header>
+          <small style="display: block; margin-bottom: 0.6rem; color: var(--pico-muted-color)">
+            Repeatable local pipeline naming convention: <strong>_web_export</strong> -> <strong>_upscaled</strong> ->
+            <strong>_interp</strong>
+          </small>
+          <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.92rem">
+            <li>Export from this app first. Files are saved with <strong>_web_export</strong>.</li>
+            <li>Run your local upscale tool next and save as <strong>_upscaled</strong>.</li>
+            <li>Run local frame interpolation last and save as <strong>_interp</strong>.</li>
+          </ul>
+        </article>
       </section>
 
       <!-- Transcoding Terminal Log Outputs details -->

@@ -18,6 +18,7 @@ import {
   type AudioCodec,
   type VideoCodec,
 } from "mediabunny";
+import { createImageWorkflow } from "./imageWorkflow";
 
 // --- System Logging Interceptor ---
 const logConsole = document.getElementById("log-console") as HTMLPreElement;
@@ -70,6 +71,8 @@ const dropzone = document.getElementById("dropzone") as HTMLDivElement;
 const videoFileInput = document.getElementById("video-file-input") as HTMLInputElement;
 
 const loadedFileSection = document.getElementById("loaded-file-section") as HTMLElement;
+const videoWorkspace = document.getElementById("video-workspace") as HTMLElement;
+const imageWorkspace = document.getElementById("image-workspace") as HTMLElement;
 const previewVideo = document.getElementById("preview-video") as HTMLVideoElement;
 
 // Metadata Elements
@@ -150,6 +153,8 @@ const outputSizeTag = document.getElementById("output-size-tag") as HTMLSpanElem
 const originalCompareVideo = document.getElementById("original-compare-video") as HTMLVideoElement;
 const outputVideo = document.getElementById("output-video") as HTMLVideoElement;
 
+const imageResultSection = document.getElementById("image-result-section") as HTMLElement;
+
 // --- State Management ---
 let currentFile: File | null = null;
 let currentSourceInput: Input | null = null;
@@ -158,6 +163,9 @@ let sourceVideoHeight: number = 0;
 let sourceVideoDuration: number = 0;
 let currentActiveConversion: Conversion | null = null;
 let isDraggingTrim = false;
+
+type MediaKind = "video" | "image";
+let imageWorkflow: ReturnType<typeof createImageWorkflow> | null = null;
 
 // --- Frame Interpolation / Blending State ---
 interface InterpolationState {
@@ -263,6 +271,16 @@ function formatDuration(sec: number) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`;
 }
 
+function revealLoadedSection() {
+  loadedFileSection.style.display = "block";
+  loadedFileSection.scrollIntoView({ behavior: "smooth" });
+}
+
+imageWorkflow = createImageWorkflow({
+  formatBytes,
+  revealLoadedSection,
+});
+
 // --- Drag & Drop Operations ---
 dropzone.addEventListener("click", () => videoFileInput.click());
 
@@ -292,20 +310,58 @@ dropzone.addEventListener("drop", (e) => {
   const dt = e.dataTransfer;
   const files = dt?.files;
   if (files && files.length > 0) {
-    handleVideoLoad(files[0]);
+    handleFileLoad(files[0]);
   }
 });
 
 videoFileInput.addEventListener("change", () => {
   if (videoFileInput.files && videoFileInput.files.length > 0) {
-    handleVideoLoad(videoFileInput.files[0]);
+    handleFileLoad(videoFileInput.files[0]);
   }
 });
+
+function detectMediaKind(file: File): MediaKind | null {
+  if (file.type.startsWith("video/")) return "video";
+  if (file.type.startsWith("image/")) return "image";
+  const lower = file.name.toLowerCase();
+  if ([".mp4", ".mov", ".webm", ".mkv", ".avi"].some((ext) => lower.endsWith(ext))) return "video";
+  if ([".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".gif"].some((ext) => lower.endsWith(ext))) return "image";
+  return null;
+}
+
+function setWorkspaceMode(kind: MediaKind) {
+  videoWorkspace.style.display = kind === "video" ? "grid" : "none";
+  imageWorkspace.style.display = kind === "image" ? "grid" : "none";
+  progressSection.style.display = "none";
+  resultSection.style.display = "none";
+  imageResultSection.style.display = "none";
+  imageWorkflow?.setActive(kind === "image");
+}
+
+async function handleFileLoad(file: File) {
+  const kind = detectMediaKind(file);
+  if (!kind) {
+    alert("Unsupported file type. Please load a video or image file.");
+    return;
+  }
+  if (kind === "video") {
+    await handleVideoLoad(file);
+  } else {
+    setWorkspaceMode("image");
+    if (currentSourceInput) {
+      currentSourceInput.dispose();
+      currentSourceInput = null;
+    }
+    await imageWorkflow?.load(file);
+  }
+}
 
 // --- Loaded Video Processing & Attributes Checking ---
 async function handleVideoLoad(file: File) {
   currentFile = file;
+  setWorkspaceMode("video");
   console.log(`Loading video file: "${file.name}" (${formatBytes(file.size)})`);
+  imageWorkflow?.dispose();
 
   // Reset Result Section
   resultSection.style.display = "none";
@@ -433,8 +489,7 @@ async function handleVideoLoad(file: File) {
     }
 
     // Reveal controls block
-    loadedFileSection.style.display = "block";
-    loadedFileSection.scrollIntoView({ behavior: "smooth" });
+    revealLoadedSection();
   } catch (error: any) {
     console.error("An error occurred during video analysis profiling: ", error);
     alert(`Could not process video metadata: ${error.message || error}`);
@@ -968,8 +1023,9 @@ conversionForm.addEventListener("submit", async (e) => {
 
     // Setup Download anchor elements
     downloadAnchor.href = outputUrl;
-    const baseName = currentFile.name.substring(0, currentFile.name.lastIndexOf("."));
-    downloadAnchor.download = `${baseName}_converted.${ext}`;
+    const dotIndex = currentFile.name.lastIndexOf(".");
+    const baseName = dotIndex > 0 ? currentFile.name.slice(0, dotIndex) : currentFile.name;
+    downloadAnchor.download = `${baseName}_web_export.${ext}`;
     outputSizeTag.textContent = `Size: ${formatBytes(outputBlob.size)}`;
 
     // Set inline output compare sources

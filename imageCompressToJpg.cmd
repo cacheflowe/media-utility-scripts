@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 echo ###################################################
 echo # Description: Compress an image to jpg, with a specified quality
 echo # Usage: imageCompressToJpg.cmd /path/to/image.png [quality] [width] [height]
@@ -6,7 +7,7 @@ echo # Param 1: Image file
 echo # Param 2 [Optional]: JPG quality (0-100, default: 85)
 echo # Param 3 [Optional]: Width in pixels (for resize, maintains aspect ratio if used alone)
 echo # Param 4 [Optional]: Height in pixels (for resize, used with width for exact dimensions)
-echo # Requires: imagemagick, jpegoptim
+echo # Requires: imagemagick, jpegoptim (optional)
 echo ###################################################
 echo.
 
@@ -16,59 +17,40 @@ IF "%~1"=="" (
     exit /b 1
 )
 
-REM Verify input file exists
 IF NOT EXIST "%~1" (
     echo Error: Image file not found: %~1
     exit /b 1
 )
 
-REM Set default quality if not specified
-set "quality=85"
-IF NOT "%~2"=="" (
-    set "quality=%~2"
-    
-    REM Validate quality parameter is within range
-    IF %quality% LSS 0 (
-        echo Error: Quality must be between 0-100
-        exit /b 1
-    )
-    IF %quality% GTR 100 (
-        echo Error: Quality must be between 0-100
-        exit /b 1
-    )
+IF EXIST "%~1\" (
+    echo Error: "%~1" is a directory, not a file.
+    echo Use imageCompressToJpgDir.cmd for directories.
+    exit /b 1
 )
 
-REM Set optional resize parameters
-set "width="
-set "height="
-set "resize="
-IF NOT "%~3"=="" set "width=%~3"
-IF NOT "%~4"=="" set "height=%~4"
+REM Set default quality if not specified
+set "quality=85"
+IF NOT "%~2"=="" set "quality=%~2"
 
-REM Construct resize parameter if dimensions provided
+REM Set optional resize parameters
+set "width=%~3"
+set "height=%~4"
+set "resize="
+set "sizeSuffix="
+
 IF NOT "%width%"=="" (
     IF NOT "%height%"=="" (
-        REM Both width and height provided - exact resize
         set "resize=-resize %width%x%height%^!"
         set "sizeSuffix=_%width%x%height%"
     ) ELSE (
-        REM Only width provided - maintain aspect ratio
         set "resize=-resize %width%x"
         set "sizeSuffix=_w%width%"
     )
-) ELSE (
-    IF NOT "%height%"=="" (
-        REM Only height provided - maintain aspect ratio
-        set "resize=-resize x%height%"
-        set "sizeSuffix=_h%height%"
-    ) ELSE (
-        REM No dimensions provided - no resize
-        set "resize="
-        set "sizeSuffix="
-    )
+) ELSE IF NOT "%height%"=="" (
+    set "resize=-resize x%height%"
+    set "sizeSuffix=_h%height%"
 )
 
-REM Get filename and extension
 set "filename=%~1"
 set "outputFile=%~dp1%~n1%sizeSuffix%.q%quality%.jpg"
 
@@ -86,40 +68,26 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-REM Check if jpegoptim is available
-where jpegoptim >nul 2>nul
-IF %ERRORLEVEL% NEQ 0 (
-    echo Error: jpegoptim is not installed or not in PATH
-    echo Continuing without jpegoptim optimization...
-    set "skip_jpegoptim=1"
-)
-
+REM Convert image
 echo Converting image...
-REM Do conversion with resize if specified
 IF DEFINED resize (
-    echo Resizing and compressing...
-    magick convert "%filename%" %resize% -sampling-factor 4:2:0 -strip -quality %quality% -interlace JPEG -colorspace RGB "%outputFile%"
+    magick "%filename%[0]" %resize% -sampling-factor 4:2:0 -strip -quality %quality% -interlace JPEG -colorspace sRGB "%outputFile%"
 ) ELSE (
-    echo Compressing only...
-    magick convert "%filename%" -sampling-factor 4:2:0 -strip -quality %quality% -interlace JPEG -colorspace RGB "%outputFile%"
+    magick "%filename%[0]" -sampling-factor 4:2:0 -strip -quality %quality% -interlace JPEG -colorspace sRGB "%outputFile%"
 )
 
-IF %ERRORLEVEL% NEQ 0 (
+IF !ERRORLEVEL! NEQ 0 (
     echo Error: Failed to convert image
     exit /b 1
 )
 
-REM Apply lossless compression if jpegoptim is available
-IF NOT DEFINED skip_jpegoptim (
-    echo Optimizing JPEG...
+REM Apply lossless optimization if jpegoptim is available
+where jpegoptim >nul 2>nul
+IF %ERRORLEVEL% EQU 0 (
     jpegoptim "%outputFile%" 2>nul
-    IF %ERRORLEVEL% NEQ 0 (
-        echo Warning: jpegoptim optimization failed, but the image was still created
-    )
 )
 
-REM Complete
 echo.
-echo Success: Compressed jpg at %quality%%% quality: 
+echo Success: Compressed jpg at %quality%%% quality:
 echo # %outputFile%
 exit /b 0
