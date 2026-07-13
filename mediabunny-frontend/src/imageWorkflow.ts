@@ -9,6 +9,8 @@ type PreviewTransform = {
 };
 
 type CreateImageWorkflowOptions = {
+  /** Root to query into: `document` (standalone) or a `ShadowRoot` (component). */
+  root: Document | ShadowRoot;
   formatBytes: (bytes: number, decimals?: number) => string;
   revealLoadedSection: () => void;
 };
@@ -19,14 +21,14 @@ const BLUR_RADIUS_MIN = 1;
 const BLUR_RADIUS_DEFAULT = 4;
 const PIXELATE_MIN_SIZE = 4;
 
-/** Safely query DOM element with type assertion and error on missing element */
-function getElement<T extends HTMLElement>(id: string, expectedType: string): T {
-  const el = document.getElementById(id);
-  if (!el) throw new Error(`DOM element not found: #${id} (expected ${expectedType})`);
-  return el as T;
-}
+export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: CreateImageWorkflowOptions) {
+  /** Safely query DOM element (within the toolkit root) with error on missing element */
+  function getElement<T extends HTMLElement>(id: string, expectedType: string): T {
+    const el = root.getElementById(id);
+    if (!el) throw new Error(`DOM element not found: #${id} (expected ${expectedType})`);
+    return el as T;
+  }
 
-export function createImageWorkflow({ formatBytes, revealLoadedSection }: CreateImageWorkflowOptions) {
   // Canvas and rendering elements
   const imageCanvasStage = getElement<HTMLDivElement>("image-canvas-stage", "div#image-canvas-stage");
   const imagePreviewCanvas = getElement<HTMLCanvasElement>("image-preview-canvas", "canvas#image-preview-canvas");
@@ -41,8 +43,8 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
 
   // Crop and canvas tool controls
   const imgEnableCrop = getElement<HTMLInputElement>("img-enable-crop", "input#img-enable-crop");
-  const imgCanvasTool = getElement<HTMLSelectElement>("img-canvas-tool", "select#img-canvas-tool");
-  const imgCanvasToolBadge = getElement<HTMLElement>("img-canvas-tool-badge", "span#img-canvas-tool-badge");
+  const imgToolCrop = getElement<HTMLInputElement>("img-tool-crop", "input#img-tool-crop");
+  const imgToolPaint = getElement<HTMLInputElement>("img-tool-paint", "input#img-tool-paint");
   const imgCropX = getElement<HTMLInputElement>("img-crop-x", "input#img-crop-x");
   const imgCropY = getElement<HTMLInputElement>("img-crop-y", "input#img-crop-y");
   const imgCropWidth = getElement<HTMLInputElement>("img-crop-width", "input#img-crop-width");
@@ -74,9 +76,9 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
   // Form and result section
   const imageForm = getElement<HTMLFormElement>("image-form", "form#image-form");
   const imageResultSection = getElement<HTMLElement>("image-result-section", "section#image-result-section");
+  const imageOutputPlaceholder = getElement<HTMLElement>("image-output-placeholder", "div#image-output-placeholder");
   const imageDownloadAnchor = getElement<HTMLAnchorElement>("image-download-anchor", "a#image-download-anchor");
   const imageOutputSizeTag = getElement<HTMLElement>("image-output-size-tag", "span#image-output-size-tag");
-  const imageOriginalPreview = getElement<HTMLImageElement>("image-original-preview", "img#image-original-preview");
   const imageOutputPreview = getElement<HTMLImageElement>("image-output-preview", "img#image-output-preview");
 
   let currentFile: File | null = null;
@@ -85,7 +87,6 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
   let sourceImageMaskCtx: CanvasRenderingContext2D | null = null;
   let sourceImageWidth = 0;
   let sourceImageHeight = 0;
-  let cropDimensionDisplay: HTMLElement | null = null;
   let currentImageObjectUrl: string | null = null;
   let currentImageOutputUrl: string | null = null;
   let isPaintingMask = false;
@@ -176,12 +177,6 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
     imgCropY.value = String(y);
     imgCropWidth.value = String(width);
     imgCropHeight.value = String(height);
-    updateCropDimensionDisplay(width, height);
-  }
-
-  function updateCropDimensionDisplay(width: number, height: number) {
-    if (!cropDimensionDisplay) return;
-    cropDimensionDisplay.textContent = `${width} × ${height}px`;
   }
 
   function getCropHandleAtPoint(stageX: number, stageY: number): CropDragHandle | null {
@@ -245,29 +240,32 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
     pctx.clearRect(0, 0, drawWidth, drawHeight);
     pctx.drawImage(sourceImageBitmap, 0, 0, drawWidth, drawHeight);
 
-    const crop = getNormalizedCrop();
-    const cropX = crop.x * scale;
-    const cropY = crop.y * scale;
-    const cropW = crop.width * scale;
-    const cropH = crop.height * scale;
+    // Only draw the crop marquee when cropping is enabled
+    if (imgEnableCrop.checked) {
+      const crop = getNormalizedCrop();
+      const cropX = crop.x * scale;
+      const cropY = crop.y * scale;
+      const cropW = crop.width * scale;
+      const cropH = crop.height * scale;
 
-    pctx.save();
-    pctx.strokeStyle = "rgba(255, 107, 129, 0.95)";
-    pctx.lineWidth = 2;
-    pctx.setLineDash([8, 5]);
-    pctx.strokeRect(cropX, cropY, cropW, cropH);
-    pctx.setLineDash([]);
-    pctx.fillStyle = "rgba(255, 107, 129, 0.95)";
-    const handleSize = 10;
-    [
-      [cropX, cropY],
-      [cropX + cropW, cropY],
-      [cropX, cropY + cropH],
-      [cropX + cropW, cropY + cropH],
-    ].forEach(([x, y]) => {
-      pctx.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-    });
-    pctx.restore();
+      pctx.save();
+      pctx.strokeStyle = "rgba(255, 107, 129, 0.95)";
+      pctx.lineWidth = 2;
+      pctx.setLineDash([8, 5]);
+      pctx.strokeRect(cropX, cropY, cropW, cropH);
+      pctx.setLineDash([]);
+      pctx.fillStyle = "rgba(255, 107, 129, 0.95)";
+      const handleSize = 10;
+      [
+        [cropX, cropY],
+        [cropX + cropW, cropY],
+        [cropX, cropY + cropH],
+        [cropX + cropW, cropY + cropH],
+      ].forEach(([x, y]) => {
+        pctx.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
+      });
+      pctx.restore();
+    }
 
     renderMaskPreview();
   }
@@ -325,13 +323,40 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
     imgOutHeight.value = String(crop.height);
   }
 
+  function getCanvasTool(): "crop" | "paint" | null {
+    if (imgToolCrop.checked) return "crop";
+    if (imgToolPaint.checked) return "paint";
+    return null;
+  }
+
   function updateImageToolMode() {
-    const cropMode = imgCanvasTool.value === "crop";
-    imageCanvasStage.classList.toggle("is-crop-mode", cropMode);
-    imageCanvasStage.classList.toggle("is-paint-mode", !cropMode);
-    imgCanvasToolBadge.textContent = cropMode ? "Current: Crop Box" : "Current: Paint Redaction";
-    imgCanvasToolBadge.classList.toggle("tool-badge-crop", cropMode);
-    imgCanvasToolBadge.classList.toggle("tool-badge-paint", !cropMode);
+    const tool = getCanvasTool();
+    imageCanvasStage.classList.toggle("is-crop-mode", tool === "crop");
+    imageCanvasStage.classList.toggle("is-paint-mode", tool === "paint");
+  }
+
+  // A tool radio is only selectable when its corresponding feature is enabled.
+  // Keeps the active tool valid, switching or clearing it as features toggle.
+  function updateToolAvailability() {
+    const cropOn = imgEnableCrop.checked;
+    const paintOn = imgEnableBlur.checked;
+    imgToolCrop.disabled = !cropOn;
+    imgToolPaint.disabled = !paintOn;
+
+    if (imgToolCrop.checked && !cropOn) {
+      imgToolCrop.checked = false;
+      if (paintOn) imgToolPaint.checked = true;
+    }
+    if (imgToolPaint.checked && !paintOn) {
+      imgToolPaint.checked = false;
+      if (cropOn) imgToolCrop.checked = true;
+    }
+    if (!imgToolCrop.checked && !imgToolPaint.checked) {
+      if (cropOn) imgToolCrop.checked = true;
+      else if (paintOn) imgToolPaint.checked = true;
+    }
+
+    updateImageToolMode();
   }
 
   function updateQualityLabel() {
@@ -461,6 +486,7 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
     resetLoadedState();
     currentFile = file;
     imageResultSection.style.display = "none";
+    imageOutputPlaceholder.style.display = "";
     currentImageObjectUrl = URL.createObjectURL(file);
 
     sourceImageBitmap = await createImageBitmap(file);
@@ -478,23 +504,12 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
     imgMetaAspect.textContent = `${(sourceImageWidth / sourceImageHeight).toFixed(2)}:1`;
     imgMetaType.textContent = file.type || "image/*";
 
-    imageOriginalPreview.src = currentImageObjectUrl;
     imageOutputPreview.src = "";
 
     resetImageCropToFull();
     clearImageMask();
-    updateImageToolMode();
+    updateToolAvailability();
     updateQualityLabel();
-
-    // Set up live crop dimension display
-    if (!cropDimensionDisplay) {
-      cropDimensionDisplay = document.createElement("div");
-      cropDimensionDisplay.style.cssText =
-        "position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 500; font-family: monospace; z-index: 10; pointer-events: none;";
-      imageCanvasStage.appendChild(cropDimensionDisplay);
-    }
-    const crop = getNormalizedCrop();
-    updateCropDimensionDisplay(crop.width, crop.height);
 
     revealLoadedSection();
     renderImageWorkspace();
@@ -518,13 +533,13 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
   });
 
   imgEnableCrop.addEventListener("change", () => {
+    updateToolAvailability();
     syncImageOutputFromCrop();
     renderImageWorkspace();
   });
 
-  imgCanvasTool.addEventListener("change", () => {
-    updateImageToolMode();
-  });
+  imgToolCrop.addEventListener("change", updateImageToolMode);
+  imgToolPaint.addEventListener("change", updateImageToolMode);
 
   imgCropFull.addEventListener("click", () => {
     resetImageCropToFull();
@@ -578,6 +593,7 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
   });
 
   imgEnableBlur.addEventListener("change", () => {
+    updateToolAvailability();
     renderMaskPreview();
   });
 
@@ -598,7 +614,9 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
     const point = toSourcePoint(e.clientX, e.clientY);
     if (!point) return;
 
-    if (imgCanvasTool.value === "crop") {
+    const tool = getCanvasTool();
+    if (tool === "crop") {
+      if (!imgEnableCrop.checked) return;
       const stagePoint = getStagePoint(e.clientX, e.clientY);
       const handle = getCropHandleAtPoint(stagePoint.x, stagePoint.y);
       if (!handle) return;
@@ -607,11 +625,13 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
         startPoint: point,
         startCrop: getNormalizedCrop(),
       };
-    } else {
+    } else if (tool === "paint") {
       if (!imgEnableBlur.checked) return;
       isPaintingMask = true;
       lastMaskPoint = point;
       paintMaskStroke(point, point);
+    } else {
+      return;
     }
 
     imageMaskCanvas.setPointerCapture(e.pointerId);
@@ -760,6 +780,7 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
       imageDownloadAnchor.download = `${base}_web_export.${ext}`;
       imageOutputSizeTag.textContent = `Size: ${formatBytes(blob.size)}`;
       imageOutputPreview.src = currentImageOutputUrl;
+      imageOutputPlaceholder.style.display = "none";
       imageResultSection.style.display = "block";
       imageResultSection.scrollIntoView({ behavior: "smooth" });
       console.log(`Image processing complete. Output: ${formatBytes(blob.size)} (${ext.toUpperCase()})`);
@@ -770,7 +791,7 @@ export function createImageWorkflow({ formatBytes, revealLoadedSection }: Create
   });
 
   updateQualityLabel();
-  updateImageToolMode();
+  updateToolAvailability();
 
   return {
     load,

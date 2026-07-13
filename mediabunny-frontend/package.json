@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:component": "tsc && vite build --mode component",
+    "build:all": "npm run build && npm run build:component",
     "preview": "vite preview",
     "update-libs": "npx npm-check-updates -u && npm install"
   },

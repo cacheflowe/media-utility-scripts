@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&lt;media-converter&gt; drop-in demo</title>
+    <style>
+      /* Deliberately opinionated host-page styles to prove shadow-DOM isolation:
+         none of this should leak into the component, and vice versa. */
+      body {
+        font-family: Georgia, serif;
+        margin: 0;
+        background: #fafafa;
+        color: #222;
+      }
+      header.host {
+        background: #6d28d9;
+        color: #fff;
+        padding: 1.5rem 2rem;
+      }
+      header.host h1 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+      p.host {
+        max-width: 60ch;
+        margin: 1.5rem 2rem;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="host">
+      <h1>Host page (purple, serif) — the component below is fully isolated</h1>
+    </header>
+    <p class="host">
+      This page loads the built <code>media-converter.js</code> and drops in a single
+      <code>&lt;media-converter&gt;</code> tag. The host page's serif font and purple theme do not affect the
+      component, and Pico's styles stay sealed inside the shadow root.
+    </p>
+
+    <media-converter></media-converter>
+
+    <script type="module" src="./dist-component/media-converter.js"></script>
+  </body>
+</html>

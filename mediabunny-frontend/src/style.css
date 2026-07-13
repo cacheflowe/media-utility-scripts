@@ -4,6 +4,11 @@
   --primary-color: #ff6b81;
 }
 
+/* Full-width standalone layout with a small gutter (no Pico .container clamp) */
+body {
+  padding: 0.5rem 1.5rem 2rem;
+}
+
 /* Custom Dropzone Styling */
 #dropzone {
   border: 3px dashed var(--pico-muted-border-color);
@@ -53,10 +58,60 @@
   display: block;
 }
 
+/* Interactive spatial-crop overlay on the video preview */
+.crop-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none; /* let the video's own controls work; the box opts in */
+}
+
+.crop-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--primary-color, #ff6b81);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45); /* dims everything outside the box */
+  cursor: move;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.crop-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--primary-color, #ff6b81);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.crop-handle[data-handle="nw"] {
+  left: -8px;
+  top: -8px;
+  cursor: nwse-resize;
+}
+.crop-handle[data-handle="ne"] {
+  right: -8px;
+  top: -8px;
+  cursor: nesw-resize;
+}
+.crop-handle[data-handle="sw"] {
+  left: -8px;
+  bottom: -8px;
+  cursor: nesw-resize;
+}
+.crop-handle[data-handle="se"] {
+  right: -8px;
+  bottom: -8px;
+  cursor: nwse-resize;
+}
+
 /* Meta list style */
 .meta-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
@@ -119,12 +174,6 @@
 }
 
 /* Configuration Card Formatting */
-article.config-card {
-  margin-bottom: 2rem;
-  border: 1px solid var(--pico-muted-border-color);
-  border-radius: 12px;
-}
-
 header.card-header {
   margin: -1.5rem -1.5rem 1.5rem -1.5rem;
   padding: 1rem 1.5rem;
@@ -133,8 +182,123 @@ header.card-header {
   font-weight: bold;
 }
 
+/* Collapsible settings panels (<details>) */
+details.config-card {
+  margin-bottom: 0;
+  padding: 0;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--pico-card-background-color);
+}
+
+details.config-card > summary.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background-color: var(--pico-card-sectioning-background-color);
+  border-bottom: 1px solid var(--pico-muted-border-color);
+  font-weight: bold;
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 0.15s ease;
+}
+
+details.config-card > summary.card-header:hover {
+  background-color: var(--pico-muted-border-color);
+}
+
+details.config-card:not([open]) > summary.card-header {
+  border-bottom: none;
+}
+
+/* Hide the browser default disclosure marker, use our own chevron */
+details.config-card > summary.card-header::-webkit-details-marker {
+  display: none;
+}
+
+details.config-card > summary.card-header::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 2px solid currentColor;
+  border-left: 0;
+  border-top: 0;
+  transform: rotate(45deg);
+  opacity: 0.55;
+  transition: transform 0.2s ease;
+  background: none;
+}
+
+details.config-card[open] > summary.card-header::after {
+  transform: rotate(-135deg);
+}
+
+.config-card-body {
+  padding: 1.25rem 1.5rem;
+}
+
+/* Standard settings-panel spacing across all editing interfaces (video, image,
+   audio). Panels are direct children; this gives every workspace the same
+   vertical rhythm between sections. */
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Audio waveform preview */
+.audio-waveform {
+  display: block;
+  width: 100%;
+  height: 90px;
+  margin-top: 0.75rem;
+  border-radius: 6px;
+  background: var(--pico-card-sectioning-background-color);
+  border: 1px solid var(--pico-muted-border-color);
+  color: var(--primary-color); /* read by canvas to color the peaks */
+  cursor: pointer;
+}
+
+/* Subjective-quality readout: tag + estimated bitrate on their own line */
+.quality-readout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.quality-rate {
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pico-muted-color);
+}
+
+/* Estimated output size readout */
+.size-estimate {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--pico-muted-border-color);
+  font-size: 0.9rem;
+}
+
+.size-estimate strong {
+  font-family: monospace;
+  color: var(--pico-primary);
+}
+
 /* Real-time console detail */
-#log-console {
+.log-section {
+  margin: 0;
+}
+
+.log-section pre {
   max-height: 200px;
   overflow-y: auto;
   font-family: "Courier New", Courier, monospace;
@@ -188,30 +352,151 @@ nav.brand-nav {
   margin-left: 0.5rem;
 }
 
-/* Workshop Responsive 2-Column Grid Layout */
+/* Workshop 3-Column Workflow Layout: info | settings | output.
+   Uses container queries so the layout responds to the component's OWN width
+   (not the viewport) — essential when embedded in a narrow host column. */
+#loaded-file-section {
+  container-type: inline-size;
+}
+
 .workshop-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 2rem;
+  gap: 1.5rem;
   margin-top: 1.5rem;
 }
 
-@media (min-width: 992px) {
+/* Medium width: two columns (info | settings), output drops to a full-width row */
+@container (min-width: 720px) and (max-width: 1099px) {
   .workshop-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); /* Mathematically equal width, regardless of content */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .workshop-output {
+    grid-column: 1 / -1;
   }
 }
 
-.workshop-sidebar {
+/* Wide: full three-column workflow */
+@container (min-width: 1100px) {
+  .workshop-layout {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.workshop-sidebar,
+.workshop-main,
+.workshop-output {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.workshop-main {
+/* Render/cancel actions at the top of the output column */
+.output-actions {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.5rem;
+}
+
+.output-actions button {
+  width: 100%;
+  margin: 0;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 0.8rem 2rem;
+}
+
+/* Batch mode: input thumbnails grid (column 1) */
+.batch-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.4rem;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.batch-thumb {
+  aspect-ratio: 1;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--pico-muted-border-color);
+  background: var(--pico-card-sectioning-background-color);
+}
+
+#batch-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.batch-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.batch-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.batch-item-status {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--pico-muted-color);
+}
+
+.batch-item[data-status="done"] .batch-item-status {
+  color: rgb(46, 204, 113);
+}
+
+.batch-item[data-status="error"] .batch-item-status {
+  color: #f92672;
+}
+
+.batch-item-dl {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Empty-state shell where the processed media will appear */
+.output-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 240px;
+  padding: 2rem;
+  border: 2px dashed var(--pico-muted-border-color);
+  border-radius: 12px;
+  color: var(--pico-muted-color);
+  text-align: center;
+}
+
+.output-shell svg {
+  opacity: 0.5;
+}
+
+.output-shell p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Neutralize the legacy top margins the output sections carried when they were
+   standalone page sections, now that they live inside the output column. */
+.workshop-output > section {
+  margin-top: 0 !important;
 }
 
 /* Custom Dual Range Slider Overlays */
@@ -325,6 +610,36 @@ nav.brand-nav {
   gap: 0.65rem;
   align-items: center;
   margin-bottom: 0.75rem;
+}
+
+/* Canvas tool picker (radios) shown beneath the image preview */
+.canvas-tool-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.canvas-tool-picker .canvas-tool-label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--pico-muted-color);
+}
+
+.canvas-tool-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.canvas-tool-picker label:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .tool-badge {
