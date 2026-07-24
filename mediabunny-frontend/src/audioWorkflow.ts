@@ -15,6 +15,8 @@ import {
   type ConversionAudioOptions,
   type AudioCodec,
 } from "mediabunny";
+import { formatDuration } from "./shared";
+import { createTrimController } from "./trimController";
 
 type CreateAudioWorkflowOptions = {
   /** Root to query into: `document` (standalone) or a `ShadowRoot` (component). */
@@ -87,7 +89,6 @@ export function createAudioWorkflow({ root, formatBytes, revealLoadedSection }: 
   let currentInput: Input | null = null;
   let sourceDuration = 0;
   let currentConversion: Conversion | null = null;
-  let isDraggingTrim = false;
   let objectUrl: string | null = null;
   let outputUrl: string | null = null;
 
@@ -105,14 +106,6 @@ export function createAudioWorkflow({ root, formatBytes, revealLoadedSection }: 
       URL.revokeObjectURL(outputUrl);
       outputUrl = null;
     }
-  }
-
-  function formatDuration(sec: number) {
-    if (isNaN(sec) || !isFinite(sec)) return "0:00";
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    const ms = Math.floor((sec % 1) * 100);
-    return `${m}:${s.toString().padStart(2, "0")}.${ms.toString().padStart(2, "0")}`;
   }
 
   function currentFormatSpec() {
@@ -176,16 +169,6 @@ export function createAudioWorkflow({ root, formatBytes, revealLoadedSection }: 
       if (firstOk) outFormat.value = firstOk.value;
     }
     updateFormatUI();
-  }
-
-  function updateTrimVisuals(startVal: number, endVal: number) {
-    trimStartVal.textContent = `${startVal.toFixed(2)}s`;
-    trimEndVal.textContent = `${endVal.toFixed(2)}s`;
-    if (sourceDuration) {
-      trimSelectionBar.style.left = `${(startVal / sourceDuration) * 100}%`;
-      trimSelectionBar.style.width = `${((endVal - startVal) / sourceDuration) * 100}%`;
-    }
-    drawWaveform();
   }
 
   // --- Waveform ---
@@ -323,12 +306,8 @@ export function createAudioWorkflow({ root, formatBytes, revealLoadedSection }: 
         metaBitrate.textContent = "-";
       }
 
-      // Init trim sliders
-      trimStart.max = String(sourceDuration);
-      trimEnd.max = String(sourceDuration);
-      trimStart.value = "0";
-      trimEnd.value = String(sourceDuration);
-      updateTrimVisuals(0, sourceDuration);
+      // Init trim range to the full clip
+      audioTrim.setDuration(sourceDuration);
 
       console.log(`Loaded audio: "${file.name}" — ${formatDuration(sourceDuration)}, ${track.sampleRate}Hz, ${track.numberOfChannels}ch.`);
       revealLoadedSection();
@@ -340,65 +319,19 @@ export function createAudioWorkflow({ root, formatBytes, revealLoadedSection }: 
   }
 
   // --- Trim interactions ---
-  enableTrim.addEventListener("change", () => {
-    if (enableTrim.checked) {
-      trimControls.style.display = "block";
-      audioPreview.pause();
-      const s = parseFloat(trimStart.value);
-      updateTrimVisuals(s, parseFloat(trimEnd.value));
-      audioPreview.currentTime = s;
-    } else {
-      trimControls.style.display = "none";
-    }
-    updateSizeEstimate();
-  });
-
-  trimStart.addEventListener("input", () => {
-    isDraggingTrim = true;
-    audioPreview.pause();
-    let s = parseFloat(trimStart.value);
-    const e = parseFloat(trimEnd.value);
-    if (s >= e) {
-      s = Math.max(0, e - 0.05);
-      trimStart.value = String(s);
-    }
-    trimStart.style.zIndex = "3";
-    trimEnd.style.zIndex = "2";
-    updateTrimVisuals(s, e);
-    audioPreview.currentTime = s;
-  });
-
-  trimEnd.addEventListener("input", () => {
-    isDraggingTrim = true;
-    audioPreview.pause();
-    const s = parseFloat(trimStart.value);
-    let e = parseFloat(trimEnd.value);
-    if (e <= s) {
-      e = Math.min(sourceDuration, s + 0.05);
-      trimEnd.value = String(e);
-    }
-    trimStart.style.zIndex = "2";
-    trimEnd.style.zIndex = "3";
-    updateTrimVisuals(s, e);
-    audioPreview.currentTime = e;
-  });
-
-  [trimStart, trimEnd].forEach((el) =>
-    ["change", "mouseup", "touchend"].forEach((ev) =>
-      el.addEventListener(ev, () => {
-        isDraggingTrim = false;
-      }),
-    ),
-  );
-
-  audioPreview.addEventListener("timeupdate", () => {
-    if (enableTrim.checked && !isDraggingTrim) {
-      const e = parseFloat(trimEnd.value);
-      if (audioPreview.currentTime >= e) {
-        audioPreview.pause();
-        audioPreview.currentTime = parseFloat(trimStart.value);
-      }
-    }
+  const audioTrim = createTrimController({
+    media: audioPreview,
+    enable: enableTrim,
+    controlsGroup: trimControls,
+    startInput: trimStart,
+    endInput: trimEnd,
+    startLabel: trimStartVal,
+    endLabel: trimEndVal,
+    selectionBar: trimSelectionBar,
+    onChange: () => {
+      drawWaveform();
+      updateSizeEstimate();
+    },
   });
 
   // --- Format / estimate ---
@@ -510,7 +443,6 @@ export function createAudioWorkflow({ root, formatBytes, revealLoadedSection }: 
     outputPreview.removeAttribute("src");
     sourceDuration = 0;
     currentFile = null;
-    isDraggingTrim = false;
     loadSeq++; // invalidate any in-flight waveform decode
     peaks = [];
     drawWaveform();

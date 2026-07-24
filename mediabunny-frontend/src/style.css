@@ -145,11 +145,20 @@ body {
   font-weight: 500;
 }
 
-.slider-group span.time-val {
+/* Monospace value chip used by trim readouts, quality tags, bitrate labels, etc. */
+.time-val {
+  display: inline-block;
   font-family: monospace;
+  font-size: 0.85rem;
   background: var(--pico-code-background-color);
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+/* Emphasized variant (e.g. the subjective-quality tag) */
+.time-val-primary {
+  background: var(--pico-primary-background);
+  color: var(--pico-primary-inverse);
 }
 
 /* Custom indicator showing visual selection in trim */
@@ -173,13 +182,66 @@ body {
   transition: all 0.1s ease;
 }
 
-/* Configuration Card Formatting */
+/* Configuration Card Formatting.
+   `header.card-header` bleeds to the edges of a 1rem-padded card (.info-card /
+   .result-card); the collapsible <details> panels use `summary.card-header`
+   (styled separately below). */
 header.card-header {
-  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+  margin: -1rem -1rem 1.5rem -1rem;
   padding: 1rem 1.5rem;
   background-color: var(--pico-card-sectioning-background-color);
   border-bottom: 1px solid var(--pico-muted-border-color);
   font-weight: bold;
+}
+
+/* Green "success" tint for processed-output headers */
+header.card-header.success {
+  background: rgba(46, 204, 113, 0.05);
+  color: rgb(46, 204, 113);
+}
+
+/* Sidebar info card (preview + attributes) */
+.info-card {
+  padding: 1rem;
+  margin-bottom: 0;
+}
+
+/* Processed-output preview card */
+.result-card {
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgb(46, 204, 113);
+}
+
+/* Green result callout ("Success! …" / "… Ready") */
+.success-note {
+  display: block;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgb(46, 204, 113);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.success-note h3 {
+  color: rgb(46, 204, 113);
+  margin-bottom: 0.5rem;
+}
+
+/* Download link button + its size tag */
+.download-btn {
+  border: none;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.output-size {
+  margin-left: 1rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  opacity: 0.85;
 }
 
 /* Collapsible settings panels (<details>) */
@@ -269,6 +331,7 @@ details.config-card[open] > summary.card-header::after {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
+  justify-items: start; /* chips hug their text instead of stretching the column */
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }

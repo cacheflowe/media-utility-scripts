@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:component": "tsc && vite build --mode component",
-    "build:all": "npm run build && npm run build:component",
+    "build:pages": "tsc && vite build --mode pages",
+    "build:all": "npm run build && npm run build:component && npm run build:pages",
     "preview": "vite preview",
     "update-libs": "npx npm-check-updates -u && npm install"
   },
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "typescript": "^6.0.3",
-    "vite": "^8.1.0"
+    "vite": "^8.1.0",
+    "vite-plugin-singlefile": "^2.3.3"
   }
 }

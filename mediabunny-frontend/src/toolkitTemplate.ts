@@ -83,8 +83,8 @@ export const TOOLKIT_MARKUP = /*html*/ `
           <!-- Column 1: input / info -->
           <div class="workshop-sidebar">
             <!-- Live Video Preview & Seeking -->
-            <article style="padding: 1rem; margin-bottom: 0">
-              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+            <article class="info-card">
+              <header class="card-header">
                 Original Video Player
               </header>
               <div class="video-container">
@@ -104,8 +104,8 @@ export const TOOLKIT_MARKUP = /*html*/ `
             </article>
 
             <!-- Source Video Properties -->
-            <article style="padding: 1rem; margin-bottom: 0">
-              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+            <article class="info-card">
+              <header class="card-header">
                 Attributes & Metadata
               </header>
 
@@ -204,7 +204,7 @@ None detected</pre
                         "
                       >
                         <span style="font-weight: 500; font-size: 0.9rem">Cut / Clip Window Range:</span>
-                        <span class="time-val" style="font-family: monospace; font-size: 0.85rem; padding: 2px 6px">
+                        <span class="time-val">
                           <span id="trim-start-val" style="font-weight: bold; color: var(--primary-color)">0.00s</span>
                           to
                           <span id="trim-end-val" style="font-weight: bold; color: var(--primary-color)">10.00s</span>
@@ -399,12 +399,7 @@ None detected</pre
                       </label>
                       <div class="quality-readout">
                         <span>
-                          <span
-                            class="time-val"
-                            id="out-quality-val"
-                            style="background-color: var(--pico-primary-background); color: var(--pico-primary-inverse)"
-                            >Medium</span
-                          >
+                          <span class="time-val time-val-primary" id="out-quality-val">Medium</span>
                           <span id="out-quality-rate" class="quality-rate">~3.5 Mbps</span>
                         </span>
                         <span
@@ -444,20 +439,7 @@ None detected</pre
                               />
                             </div>
                             <div style="display: flex; align-items: flex-end; padding-top: 1.4rem">
-                              <span
-                                class="time-val"
-                                id="custom-bitrate-mbps-label"
-                                style="
-                                  font-family: monospace;
-                                  font-size: 0.85rem;
-                                  font-weight: bold;
-                                  background: var(--pico-code-background-color);
-                                  padding: 8px 12px;
-                                  border-radius: 4px;
-                                  display: inline-block;
-                                "
-                                >3.50 Mbps</span
-                              >
+                              <span class="time-val" id="custom-bitrate-mbps-label" style="font-weight: bold; padding: 8px 12px">3.50 Mbps</span>
                             </div>
                           </div>
                           <small style="display: block; color: var(--pico-muted-color); margin-top: 0.25rem">
@@ -659,29 +641,15 @@ None detected</pre
       </section>
             <section id="result-section" style="display: none; margin-top: 2rem">
         <!-- Processed output shown first; the original already lives in the input column -->
-        <article style="padding: 1rem; border: 1px solid rgb(46, 204, 113); margin-bottom: 2rem">
-          <header
-            class="card-header"
-            style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem; background: rgba(46, 204, 113, 0.05); color: rgb(46, 204, 113)"
-          >
-            Processed Output
-          </header>
+        <article class="result-card">
+          <header class="card-header success">Processed Output</header>
           <div class="video-container">
             <video id="output-video" controls autoplay></video>
           </div>
         </article>
 
-        <ins
-          style="
-            background: rgba(46, 204, 113, 0.1);
-            border: 1px solid rgb(46, 204, 113);
-            display: block;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-          "
-        >
-          <h3 style="color: rgb(46, 204, 113); margin-bottom: 0.5rem">🎉 Success! Conversion Completed Successfully</h3>
+        <ins class="success-note">
+          <h3>🎉 Success! Conversion Completed Successfully</h3>
           <p style="margin-bottom: 1rem; font-size: 0.95rem">
             Your media has been processed on-the-fly and packaged directly in your browser. No server uploads occurred.
           </p>
@@ -692,8 +660,7 @@ None detected</pre
                 href="#"
                 id="download-anchor"
                 download="mediabunny_result.mp4"
-                class="button"
-                style="border: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px"
+                class="button download-btn"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -712,7 +679,7 @@ None detected</pre
                 </svg>
                 <span>Download Processed Video</span>
               </a>
-              <span id="output-size-tag" style="margin-left: 1rem; font-size: 0.9rem; font-weight: bold; opacity: 0.85"
+              <span id="output-size-tag" class="output-size"
                 >-</span
               >
             </div>
@@ -741,8 +708,8 @@ None detected</pre
         <div id="image-workspace" class="workshop-layout" style="display: none">
           <!-- Column 1: input / info -->
           <div class="workshop-sidebar">
-            <article style="padding: 1rem; margin-bottom: 0">
-              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+            <article class="info-card">
+              <header class="card-header">
                 Image Preview & Blur Paint Mask
               </header>
               <div class="image-canvas-stage" id="image-canvas-stage">
@@ -768,8 +735,8 @@ None detected</pre
               </small>
             </article>
 
-            <article style="padding: 1rem; margin-bottom: 0">
-              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+            <article class="info-card">
+              <header class="card-header">
                 Image Attributes
               </header>
               <div class="meta-grid">
@@ -991,27 +958,13 @@ None detected</pre
 
             <section id="image-result-section" style="display: none; margin-top: 2rem">
         <!-- Processed image shown first; the original already lives in the input column -->
-        <article style="padding: 1rem; border: 1px solid rgb(46, 204, 113); margin-bottom: 2rem">
-          <header
-            class="card-header"
-            style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem; background: rgba(46, 204, 113, 0.05); color: rgb(46, 204, 113)"
-          >
-            Processed Image
-          </header>
+        <article class="result-card">
+          <header class="card-header success">Processed Image</header>
           <img id="image-output-preview" alt="Processed image" style="width: 100%; height: auto; display: block" />
         </article>
 
-        <ins
-          style="
-            background: rgba(46, 204, 113, 0.1);
-            border: 1px solid rgb(46, 204, 113);
-            display: block;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
-          "
-        >
-          <h3 style="color: rgb(46, 204, 113); margin-bottom: 0.5rem">🎉 Image Ready</h3>
+        <ins class="success-note">
+          <h3>🎉 Image Ready</h3>
           <p style="margin-bottom: 1rem; font-size: 0.95rem">
             Your image was cropped, redacted, scaled, and re-encoded directly in browser memory.
           </p>
@@ -1021,14 +974,12 @@ None detected</pre
                 href="#"
                 id="image-download-anchor"
                 download="processed-image.jpg"
-                class="button"
-                style="border: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px"
+                class="button download-btn"
               >
                 Download Processed Image
               </a>
               <span
-                id="image-output-size-tag"
-                style="margin-left: 1rem; font-size: 0.9rem; font-weight: bold; opacity: 0.85"
+                id="image-output-size-tag" class="output-size"
                 >-</span
               >
             </div>
@@ -1057,8 +1008,8 @@ None detected</pre
         <div id="audio-workspace" class="workshop-layout" style="display: none">
           <!-- Column 1: input / info -->
           <div class="workshop-sidebar">
-            <article style="padding: 1rem; margin-bottom: 0">
-              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+            <article class="info-card">
+              <header class="card-header">
                 Original Audio Player
               </header>
               <audio id="audio-preview" controls style="width: 100%; display: block"></audio>
@@ -1068,8 +1019,8 @@ None detected</pre
               </small>
             </article>
 
-            <article style="padding: 1rem; margin-bottom: 0">
-              <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+            <article class="info-card">
+              <header class="card-header">
                 Audio Attributes
               </header>
               <div class="meta-grid">
@@ -1105,7 +1056,7 @@ None detected</pre
                     <div class="slider-group" style="margin-bottom: 0.5rem">
                       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem">
                         <span style="font-weight: 500; font-size: 0.9rem">Cut / Clip Window Range:</span>
-                        <span class="time-val" style="font-family: monospace; font-size: 0.85rem; padding: 2px 6px">
+                        <span class="time-val">
                           <span id="audio-trim-start-val" style="font-weight: bold; color: var(--primary-color)">0.00s</span>
                           to
                           <span id="audio-trim-end-val" style="font-weight: bold; color: var(--primary-color)">0.00s</span>
@@ -1202,21 +1153,19 @@ None detected</pre
             </section>
 
             <section id="audio-result-section" style="display: none">
-              <article style="padding: 1rem; border: 1px solid rgb(46, 204, 113); margin-bottom: 2rem">
-                <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem; background: rgba(46, 204, 113, 0.05); color: rgb(46, 204, 113)">
-                  Processed Audio
-                </header>
+              <article class="result-card">
+                <header class="card-header success">Processed Audio</header>
                 <audio id="audio-output-preview" controls style="width: 100%; display: block"></audio>
               </article>
-              <ins style="background: rgba(46, 204, 113, 0.1); border: 1px solid rgb(46, 204, 113); display: block; padding: 1.5rem; border-radius: 8px">
-                <h3 style="color: rgb(46, 204, 113); margin-bottom: 0.5rem">🎉 Audio Ready</h3>
+              <ins class="success-note">
+                <h3>🎉 Audio Ready</h3>
                 <p style="margin-bottom: 1rem; font-size: 0.95rem">
                   Processed directly in your browser. No server uploads occurred.
                 </p>
-                <a href="#" id="audio-download-anchor" download="audio_web_export.mp3" class="button" style="border: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px">
+                <a href="#" id="audio-download-anchor" download="audio_web_export.mp3" class="button download-btn">
                   Download Processed Audio
                 </a>
-                <span id="audio-output-size-tag" style="margin-left: 1rem; font-size: 0.9rem; font-weight: bold; opacity: 0.85">-</span>
+                <span id="audio-output-size-tag" class="output-size">-</span>
               </ins>
             </section>
 
@@ -1238,8 +1187,8 @@ None detected</pre
           <div class="workshop-layout">
             <!-- Column 1: input previews -->
             <div class="workshop-sidebar">
-              <article style="padding: 1rem; margin-bottom: 0">
-                <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+              <article class="info-card">
+                <header class="card-header">
                   Batch Input (<span id="batch-input-count">0</span>)
                 </header>
                 <div id="batch-thumbs" class="batch-thumbs"></div>
@@ -1319,8 +1268,8 @@ None detected</pre
                 </button>
               </div>
 
-              <article style="padding: 1rem; margin-bottom: 0">
-                <header class="card-header" style="margin-top: -1rem; margin-left: -1rem; margin-right: -1rem">
+              <article class="info-card">
+                <header class="card-header">
                   Batch Queue (<span id="batch-count">0</span>)
                 </header>
                 <div id="batch-queue"></div>
@@ -1334,6 +1283,130 @@ None detected</pre
                       Clear Log
                     </button>
                     <pre id="log-console-batch">System diagnostic logger initialized. Waiting for media file drop...</pre>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <div id="video-batch-workspace" style="display: none">
+          <div class="workshop-layout">
+            <!-- Column 1: input previews -->
+            <div class="workshop-sidebar">
+              <article class="info-card">
+                <header class="card-header">
+                  Batch Input (<span id="vbatch-input-count">0</span>)
+                </header>
+                <div id="vbatch-thumbs" class="batch-thumbs"></div>
+                <small style="display: block; margin-top: 0.75rem; color: var(--pico-muted-color)">
+                  Total input size: <strong id="vbatch-total-size">-</strong>
+                </small>
+              </article>
+            </div>
+            <!-- Column 2: shared settings applied to every video -->
+            <div class="workshop-main settings-stack">
+              <details class="config-card" id="panel-vbatch-codec" open>
+                <summary class="card-header">💿 Output Format & Codec</summary>
+                <div class="config-card-body">
+                  <div class="grid" style="margin-bottom: 0">
+                    <div>
+                      <label for="vbatch-out-format">Output Format</label>
+                      <select id="vbatch-out-format">
+                        <option value="mp4" selected>MP4 (.mp4)</option>
+                        <option value="webm">WebM (.webm)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="vbatch-out-codec">Video Codec</label>
+                      <select id="vbatch-out-codec">
+                        <option value="avc" selected>H.264 / AVC (High compatibility)</option>
+                        <option value="hevc">H.265 / HEVC (High compression)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <details class="config-card" id="panel-vbatch-compress" open>
+                <summary class="card-header">🗜️ Compression & Audio</summary>
+                <div class="config-card-body">
+                  <label for="vbatch-quality" style="display: block; margin-bottom: 0.5rem">
+                    Video Compression (Subjective Quality):
+                  </label>
+                  <div class="quality-readout">
+                    <span class="time-val time-val-primary" id="vbatch-quality-val">Medium</span>
+                    <span id="vbatch-quality-rate" class="quality-rate">~3.5 Mbps</span>
+                  </div>
+                  <input type="range" id="vbatch-quality" min="1" max="5" value="3" step="1" />
+                  <fieldset style="margin-top: 1rem; margin-bottom: 0">
+                    <label for="vbatch-mute">
+                      <input type="checkbox" id="vbatch-mute" />
+                      🔇 Remove audio track
+                    </label>
+                  </fieldset>
+                </div>
+              </details>
+
+              <details class="config-card" id="panel-vbatch-resize" open>
+                <summary class="card-header">📐 Resize</summary>
+                <div class="config-card-body">
+                  <fieldset>
+                    <label for="vbatch-enable-resize">
+                      <input type="checkbox" id="vbatch-enable-resize" />
+                      Enable Resize (applied to all)
+                    </label>
+                  </fieldset>
+                  <div id="vbatch-resize-controls" style="display: none">
+                    <div class="grid" style="margin-bottom: 0">
+                      <div>
+                        <label for="vbatch-maxdim-preset">Max Dimension Preset</label>
+                        <select id="vbatch-maxdim-preset">
+                          <option value="" selected>Choose a preset…</option>
+                          <option value="480">480 px</option>
+                          <option value="720">720 px</option>
+                          <option value="1080">1080 px</option>
+                          <option value="1280">1280 px</option>
+                          <option value="1920">1920 px</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label for="vbatch-maxdim">Max Dimension (px)</label>
+                        <input type="number" id="vbatch-maxdim" min="1" placeholder="e.g. 1080" />
+                      </div>
+                    </div>
+                    <small style="display: block; color: var(--pico-muted-color); margin-top: 0.5rem; font-size: 0.75rem">
+                      💡 Caps the longest side (downscale only — never enlarged; aspect ratio preserved).
+                    </small>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <!-- Column 3: actions, results queue, and logs -->
+            <div class="workshop-output">
+              <div class="output-actions">
+                <button type="button" id="vbatch-process-btn" class="contrast">🎬 Process All Videos</button>
+                <button type="button" id="vbatch-download-all" class="secondary" style="display: none">
+                  ⬇️ Download All (.zip)
+                </button>
+              </div>
+
+              <article class="info-card">
+                <header class="card-header">
+                  Batch Queue (<span id="vbatch-count">0</span>)
+                </header>
+                <div id="vbatch-queue"></div>
+              </article>
+
+              <details class="config-card log-section">
+                <summary class="card-header">🔍 System Console & logs (verbose)</summary>
+                <div class="config-card-body">
+                  <div style="position: relative">
+                    <button id="clear-console-btn-vbatch" class="outline secondary" style="position: absolute; right: 10px; top: 10px; font-size: 0.7rem; padding: 4px 10px; margin: 0; width: auto">
+                      Clear Log
+                    </button>
+                    <pre id="log-console-vbatch">System diagnostic logger initialized. Waiting for media file drop...</pre>
                   </div>
                 </div>
               </details>

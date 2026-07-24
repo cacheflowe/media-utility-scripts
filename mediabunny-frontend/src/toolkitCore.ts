@@ -7,11 +7,7 @@ import {
   WebMOutputFormat,
   BufferTarget,
   Conversion,
-  QUALITY_VERY_LOW,
-  QUALITY_LOW,
   QUALITY_MEDIUM,
-  QUALITY_HIGH,
-  QUALITY_VERY_HIGH,
   type ConversionVideoOptions,
   type ConversionAudioOptions,
   type Rotation,
@@ -21,6 +17,18 @@ import {
 import { createImageWorkflow } from "./imageWorkflow";
 import { createAudioWorkflow } from "./audioWorkflow";
 import { createImageBatchWorkflow } from "./imageBatchWorkflow";
+import { createVideoBatchWorkflow } from "./videoBatchWorkflow";
+import { createTrimController } from "./trimController";
+import {
+  formatBytes,
+  formatDuration,
+  QUALITY_MAP,
+  QUALITY_LABELS,
+  QUALITY_DESC,
+  QUALITY_RATE,
+  QUALITY_MBPS,
+  populateVideoCodecs,
+} from "./shared";
 
 /**
  * A root to query into. Both `Document` and `ShadowRoot` implement
@@ -96,6 +104,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     root.getElementById("log-console-img"),
     root.getElementById("log-console-audio"),
     root.getElementById("log-console-batch"),
+    root.getElementById("log-console-vbatch"),
   ].filter((el): el is HTMLPreElement => el != null);
   logConsoles.forEach((el) => logSinks.push(el));
 
@@ -104,6 +113,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     root.getElementById("clear-console-btn-img"),
     root.getElementById("clear-console-btn-audio"),
     root.getElementById("clear-console-btn-batch"),
+    root.getElementById("clear-console-btn-vbatch"),
   ].filter((el): el is HTMLButtonElement => el != null);
   clearButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -126,6 +136,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   const imageWorkspace = root.getElementById("image-workspace") as HTMLElement;
   const audioWorkspace = root.getElementById("audio-workspace") as HTMLElement;
   const batchWorkspace = root.getElementById("batch-workspace") as HTMLElement;
+  const videoBatchWorkspace = root.getElementById("video-batch-workspace") as HTMLElement;
   const previewVideo = root.getElementById("preview-video") as HTMLVideoElement;
 
   // Metadata Elements
@@ -241,12 +252,12 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   let sourceFps: number = 0;
   let sourceHasAudio: boolean = false;
   let currentActiveConversion: Conversion | null = null;
-  let isDraggingTrim = false;
 
-  type MediaKind = "video" | "image" | "audio" | "batch";
+  type MediaKind = "video" | "image" | "audio" | "batch" | "vbatch";
   let imageWorkflow: ReturnType<typeof createImageWorkflow> | null = null;
   let audioWorkflow: ReturnType<typeof createAudioWorkflow> | null = null;
   let imageBatchWorkflow: ReturnType<typeof createImageBatchWorkflow> | null = null;
+  let videoBatchWorkflow: ReturnType<typeof createVideoBatchWorkflow> | null = null;
 
   // --- Frame Interpolation / Blending State ---
   interface InterpolationState {
@@ -282,42 +293,6 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     };
   }
 
-  const QUALITY_MAP: Record<number, typeof QUALITY_MEDIUM> = {
-    1: QUALITY_VERY_LOW,
-    2: QUALITY_LOW,
-    3: QUALITY_MEDIUM,
-    4: QUALITY_HIGH,
-    5: QUALITY_VERY_HIGH,
-  };
-
-  const QUALITY_LABELS: Record<number, string> = {
-    1: "Very Low",
-    2: "Low",
-    3: "Medium",
-    4: "High",
-    5: "Very High",
-  };
-
-  const QUALITY_DESC: Record<number, string> = {
-    1: "Prioritizes hyper-compression over quality. Ideal for lightweight previews.",
-    2: "Aggressive compression. Noticeable reduction in metadata and detail.",
-    3: "Balanced bitrate and visual fidelity for typical social/web sharing.",
-    4: "Excellent visual density. Great for standard professional distribution.",
-    5: "Preserves maximum fine detail and frames. Generates large files.",
-  };
-
-  // Approximate target bitrate per quality level (based on standard 1080p30).
-  const QUALITY_RATE: Record<number, string> = {
-    1: "~600 kbps",
-    2: "~1.5 Mbps",
-    3: "~3.5 Mbps",
-    4: "~7.5 Mbps",
-    5: "~15 Mbps",
-  };
-
-  // Same presets as Mbps numbers, for the output-size estimate (1080p30 reference).
-  const QUALITY_MBPS: Record<number, number> = { 1: 0.6, 2: 1.5, 3: 3.5, 4: 7.5, 5: 15 };
-
   // --- Theme Toggle Implementation ---
   function initializeTheme() {
     const savedTheme =
@@ -346,24 +321,6 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
 
   initializeTheme();
 
-  // --- Formatting Helpers ---
-  function formatBytes(bytes: number, decimals = 2) {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
-  }
-
-  function formatDuration(sec: number) {
-    if (isNaN(sec) || !isFinite(sec)) return "0:00";
-    const minutes = Math.floor(sec / 60);
-    const seconds = Math.floor(sec % 60);
-    const milliseconds = Math.floor((sec % 1) * 100);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`;
-  }
-
   function revealLoadedSection() {
     loadedFileSection.style.display = "block";
     loadedFileSection.scrollIntoView({ behavior: "smooth" });
@@ -381,7 +338,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     revealLoadedSection,
   });
 
-  imageBatchWorkflow = createImageBatchWorkflow({ root, formatBytes });
+  imageBatchWorkflow = createImageBatchWorkflow({ root });
+  videoBatchWorkflow = createVideoBatchWorkflow({ root });
 
   // --- Drag & Drop Operations ---
   dropzone.addEventListener("click", () => videoFileInput.click());
@@ -427,21 +385,34 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
       return;
     }
     const images = files.filter((f) => detectMediaKind(f) === "image");
-    if (images.length >= 2) {
-      setWorkspaceMode("batch");
+    const videos = files.filter((f) => detectMediaKind(f) === "video");
+    const disposeSingles = () => {
       imageWorkflow?.dispose();
       audioWorkflow?.dispose();
       if (currentSourceInput) {
         currentSourceInput.dispose();
         currentSourceInput = null;
       }
+    };
+
+    if (videos.length >= 2) {
+      setWorkspaceMode("vbatch");
+      disposeSingles();
+      videoBatchWorkflow?.start(videos);
+      revealLoadedSection();
+      if (videos.length < files.length) {
+        console.warn(`Video batch: ${files.length - videos.length} non-video file(s) were ignored.`);
+      }
+    } else if (images.length >= 2) {
+      setWorkspaceMode("batch");
+      disposeSingles();
       imageBatchWorkflow?.start(images);
       revealLoadedSection();
       if (images.length < files.length) {
-        console.warn(`Batch mode: ${files.length - images.length} non-image file(s) were ignored.`);
+        console.warn(`Image batch: ${files.length - images.length} non-image file(s) were ignored.`);
       }
     } else {
-      // Not a multi-image batch — just load the first file
+      // Not a multi-file batch of one type — just load the first file
       handleFileLoad(files[0]);
     }
   }
@@ -463,6 +434,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     imageWorkspace.style.display = kind === "image" ? "grid" : "none";
     audioWorkspace.style.display = kind === "audio" ? "grid" : "none";
     batchWorkspace.style.display = kind === "batch" ? "block" : "none";
+    videoBatchWorkspace.style.display = kind === "vbatch" ? "block" : "none";
     progressSection.style.display = "none";
     resultSection.style.display = "none";
     outputPlaceholder.style.display = "";
@@ -470,6 +442,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     imageWorkflow?.setActive(kind === "image");
     audioWorkflow?.setActive(kind === "audio");
     if (kind !== "batch") imageBatchWorkflow?.dispose();
+    if (kind !== "vbatch") videoBatchWorkflow?.dispose();
   }
 
   async function handleFileLoad(file: File) {
@@ -587,13 +560,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
         resizeWidth.max = String(sourceVideoWidth * 2);
         resizeHeight.max = String(sourceVideoHeight * 2);
 
-        // Initialize trim slider attributes
-        trimStart.max = String(sourceVideoDuration);
-        trimEnd.max = String(sourceVideoDuration);
-        trimStart.value = "0";
-        trimEnd.value = String(sourceVideoDuration);
-
-        updateTrimVisuals(0, sourceVideoDuration);
+        // Initialize trim range to the full clip
+        videoTrim.setDuration(sourceVideoDuration);
 
         // Reset spatial crop to the full new frame
         resetVideoCropToFull();
@@ -639,122 +607,17 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     }
   }
 
-  // --- Video Seek on Trim range slide ---
-  function updateTrimVisuals(startVal: number, endVal: number) {
-    trimStartVal.textContent = `${startVal.toFixed(2)}s`;
-    trimEndVal.textContent = `${endVal.toFixed(2)}s`;
-
-    if (!sourceVideoDuration) return;
-
-    const leftPercent = (startVal / sourceVideoDuration) * 100;
-    const widthPercent = ((endVal - startVal) / sourceVideoDuration) * 100;
-
-    trimSelectionBar.style.left = `${leftPercent}%`;
-    trimSelectionBar.style.width = `${widthPercent}%`;
-  }
-
-  enableTrim.addEventListener("change", () => {
-    if (enableTrim.checked) {
-      trimControlsGroup.style.display = "block";
-      previewVideo.pause();
-      const startVal = parseFloat(trimStart.value);
-      updateTrimVisuals(startVal, parseFloat(trimEnd.value));
-      previewVideo.currentTime = startVal;
-    } else {
-      trimControlsGroup.style.display = "none";
-    }
-  });
-
-  trimStart.addEventListener("input", () => {
-    isDraggingTrim = true;
-    previewVideo.pause();
-    let startVal = parseFloat(trimStart.value);
-    const endVal = parseFloat(trimEnd.value);
-
-    // Prevent start slider from exceeding end slider
-    if (startVal >= endVal) {
-      startVal = Math.max(0, endVal - 0.05);
-      trimStart.value = String(startVal);
-    }
-
-    // Float start slider above end
-    trimStart.style.zIndex = "3";
-    trimEnd.style.zIndex = "2";
-
-    updateTrimVisuals(startVal, endVal);
-
-    // Real-time video preview scrub
-    previewVideo.currentTime = startVal;
-  });
-
-  trimEnd.addEventListener("input", () => {
-    isDraggingTrim = true;
-    previewVideo.pause();
-    const startVal = parseFloat(trimStart.value);
-    let endVal = parseFloat(trimEnd.value);
-
-    // Prevent end slider from stepping below start slider
-    if (endVal <= startVal) {
-      endVal = Math.min(sourceVideoDuration, startVal + 0.05);
-      trimEnd.value = String(endVal);
-    }
-
-    // Float end slider above start
-    trimStart.style.zIndex = "2";
-    trimEnd.style.zIndex = "3";
-
-    updateTrimVisuals(startVal, endVal);
-
-    // Real-time video preview scrub
-    previewVideo.currentTime = endVal;
-  });
-
-  // Event listeners to handle when the user lets go of the handles
-  trimStart.addEventListener("change", () => {
-    isDraggingTrim = false;
-  });
-
-  trimEnd.addEventListener("change", () => {
-    isDraggingTrim = false;
-    const startVal = parseFloat(trimStart.value);
-    previewVideo.currentTime = startVal;
-  });
-
-  // To support mobile touch bounds and immediate mouse-up overrides reliably
-  ["mouseup", "touchend"].forEach((eventName) => {
-    trimStart.addEventListener(eventName, () => {
-      isDraggingTrim = false;
-    });
-    trimEnd.addEventListener(eventName, () => {
-      isDraggingTrim = false;
-      const startVal = parseFloat(trimStart.value);
-      previewVideo.currentTime = startVal;
-    });
-  });
-
-  // Playback Boundary Clamping & Loops
-  previewVideo.addEventListener("timeupdate", () => {
-    if (enableTrim.checked && !isDraggingTrim) {
-      const startVal = parseFloat(trimStart.value);
-      const endVal = parseFloat(trimEnd.value);
-      if (previewVideo.currentTime >= endVal) {
-        previewVideo.pause();
-        previewVideo.currentTime = startVal;
-        console.log(
-          `Playback crossed your selected clipping window end (${endVal.toFixed(2)}s). Paused & reset back to start boundary.`,
-        );
-      }
-    }
-  });
-
-  previewVideo.addEventListener("play", () => {
-    if (enableTrim.checked) {
-      const startVal = parseFloat(trimStart.value);
-      const endVal = parseFloat(trimEnd.value);
-      if (previewVideo.currentTime < startVal || previewVideo.currentTime >= endVal) {
-        previewVideo.currentTime = startVal;
-      }
-    }
+  // --- Trim (dual-handle range + scrub), shared with the audio workspace ---
+  const videoTrim = createTrimController({
+    media: previewVideo,
+    enable: enableTrim,
+    controlsGroup: trimControlsGroup,
+    startInput: trimStart,
+    endInput: trimEnd,
+    startLabel: trimStartVal,
+    endLabel: trimEndVal,
+    selectionBar: trimSelectionBar,
+    onChange: () => updateSizeEstimate(),
   });
 
   // --- Custom Compression Bitrate Handlers ---
@@ -981,39 +844,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
 
   // --- Output Format Codec Alignment ---
   outFormat.addEventListener("change", () => {
-    const format = outFormat.value;
-    outVcodec.innerHTML = "";
-
-    if (format === "mp4") {
-      const h264Opt = document.createElement("option");
-      h264Opt.value = "avc";
-      h264Opt.textContent = "H.264 / AVC (High compatibility)";
-      h264Opt.selected = true;
-
-      const hevcOpt = document.createElement("option");
-      hevcOpt.value = "hevc";
-      hevcOpt.textContent = "H.265 / HEVC (High compression)";
-
-      outVcodec.appendChild(h264Opt);
-      outVcodec.appendChild(hevcOpt);
-    } else if (format === "webm") {
-      const vp9Opt = document.createElement("option");
-      vp9Opt.value = "vp9";
-      vp9Opt.textContent = "VP9 (Modern WebM Open-source)";
-      vp9Opt.selected = true;
-
-      const vp8Opt = document.createElement("option");
-      vp8Opt.value = "vp8";
-      vp8Opt.textContent = "VP8 (Legacy compatibility)";
-
-      const av1Opt = document.createElement("option");
-      av1Opt.value = "av1";
-      av1Opt.textContent = "AV1 (Ultra Next-Gen Format)";
-
-      outVcodec.appendChild(vp9Opt);
-      outVcodec.appendChild(vp8Opt);
-      outVcodec.appendChild(av1Opt);
-    }
+    populateVideoCodecs(outVcodec, outFormat.value);
   });
 
   // Compression slider value descriptor text + estimated bitrate
