@@ -4,17 +4,13 @@ Working list of planned work. Loosely ordered; not all required for a first rele
 
 ## Planned
 
-- [ ] **Shared-component refactor (files are getting big).**
-      `toolkitCore.ts` and `toolkitTemplate.ts` are large. Extract reusable pieces used across
-      video/image/audio/batch:
-      - A trim controller (video + audio duplicate the dual-slider + scrub + clamp logic).
-      - A size-estimate helper.
-      - A collapsible-panel / card markup helper, and per-workspace template fragments.
-      - Consider splitting `toolkitTemplate.ts` into per-workspace template modules.
+- [ ] **Audio batching.**
+      Batch now covers images + video. Add audio batch (sequential conversions, shared
+      format/bitrate settings) on the same `batchShared` engine.
 
-- [ ] **Extend batching to video + audio.**
-      Batch currently covers images only (`src/imageBatchWorkflow.ts`). Add video/audio batch
-      (sequential mediabunny conversions with shared settings, per-item progress).
+- [ ] **Further refactor (optional).**
+      Not yet extracted: a size-estimate helper, a collapsible-panel/card markup helper, and
+      splitting the large `toolkitTemplate.ts` into per-workspace template fragments.
 
 - [ ] **UI sweep + prep for release.**
       - Verify light theme (not just dark) across every panel.
@@ -49,3 +45,13 @@ Working list of planned work. Loosely ordered; not all required for a first rele
 - [x] Audio waveform — decoded via WebAudio, peaks drawn to a canvas with trim-selection dimming,
       a playhead, and click-to-seek.
 - [x] Standardized settings-panel spacing across all workspaces via `.settings-stack`.
+- [x] Clipboard paste support — pasting an image (e.g. a screenshot) anywhere on the page feeds
+      it into the same load/batch pipeline as drag-and-drop.
+- [x] Lightweight Base64 PNG — image workspace has a "Copy Lightweight Base64 PNG" action that
+      quantizes the current crop/redaction/resize result to an indexed-color PNG (`upng-js`,
+      selectable palette size) and copies an `<img>` tag straight to the clipboard.
+- [x] Shared-component refactor: `src/shared.ts` (formatters, quality maps, codec/format builders),
+      `src/trimController.ts` (video + audio share the dual-handle trim), and `src/batchShared.ts`
+      (generic queue/zip/thumbnail engine that both image and video batch build on).
+- [x] Video batching — drop multiple videos: shared codec/quality/resize (downscale-only) + remove-audio,
+      first-frame thumbnails, per-file conversion progress, ZIP download-all (`src/videoBatchWorkflow.ts`).

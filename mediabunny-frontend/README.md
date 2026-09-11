@@ -15,14 +15,17 @@ Features:
 - Live side-by-side original/output comparison and a verbose diagnostics console.
 - Light/dark theme.
 
-## Two ways to ship it
+## Three ways to ship it
 
-The exact same UI and logic build into **two targets** from one shared codebase:
+The exact same UI and logic build into **three targets** from one shared codebase:
 
 1. **Standalone site** (`dist/`) — a normal static site you can host anywhere.
 2. **Web component** (`dist-component/media-converter.js`) — a single,
    fully self-contained, shadow-DOM-isolated `<media-converter>` element you
    can drop into any page.
+3. **GitHub Pages demo** (`../index.html`, repo root) — same as the standalone
+   site, but a single self-contained file with no separate JS/CSS assets, built
+   straight to the repo root so GitHub Pages can serve it directly.
 
 ### Architecture
 
@@ -50,12 +53,26 @@ npm run dev        # Vite dev server for the standalone site
 ```bash
 npm run build            # -> dist/            standalone static site
 npm run build:component  # -> dist-component/  single-file web component
-npm run build:all        # both
+npm run build:pages      # -> ../index.html    single-file build, written to the repo root
+npm run build:all        # build + build:component
 ```
 
 The standalone build uses a **relative base** (`./assets/...`), so `dist/` works
 from any host or subpath (GitHub Pages project pages, Vercel, a nested folder,
 etc.) with no config change.
+
+### Updating the GitHub Pages demo
+
+The repo's GitHub Pages site is served from `index.html` at the **repo root**
+(not `mediabunny-frontend/dist/`). After making changes here, refresh it with:
+
+```bash
+npm run build:pages
+```
+
+This inlines everything (JS/CSS, no external assets) into one `index.html` one
+directory up, at the repo root. Review the diff, then commit and push that file
+from the repo root to update the live demo.
 
 ## Embedding the web component
 

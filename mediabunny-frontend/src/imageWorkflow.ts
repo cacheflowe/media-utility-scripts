@@ -1,3 +1,5 @@
+import UPNG from "upng-js";
+
 type CropDragHandle = "move" | "nw" | "ne" | "sw" | "se" | "new";
 
 type PreviewTransform = {
@@ -59,6 +61,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
   const imgScalePreset = getElement<HTMLSelectElement>("img-scale-preset", "select#img-scale-preset");
   const imgMaxDimPreset = getElement<HTMLSelectElement>("img-maxdim-preset", "select#img-maxdim-preset");
   const imgLockAspect = getElement<HTMLInputElement>("img-lock-aspect", "input#img-lock-aspect");
+  const imgResizeStatus = getElement<HTMLElement>("img-resize-status", "small#img-resize-status");
 
   // Redaction/brush controls
   const imgEnableBlur = getElement<HTMLInputElement>("img-enable-blur", "input#img-enable-blur");
@@ -72,6 +75,23 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
   const imgOutFormat = getElement<HTMLSelectElement>("img-out-format", "select#img-out-format");
   const imgQuality = getElement<HTMLInputElement>("img-quality", "input#img-quality");
   const imgQualityLabel = getElement<HTMLElement>("img-quality-label", "span#img-quality-label");
+
+  // Lightweight base64 PNG controls
+  const imgBase64Colors = getElement<HTMLSelectElement>("img-base64-colors", "select#img-base64-colors");
+  const imageCopyBase64Btn = getElement<HTMLButtonElement>("image-copy-base64-btn", "button#image-copy-base64-btn");
+  const imageCopyBase64Status = getElement<HTMLElement>(
+    "image-copy-base64-status",
+    "small#image-copy-base64-status",
+  );
+  const imageBase64PreviewWrap = getElement<HTMLElement>(
+    "image-base64-preview-wrap",
+    "div#image-base64-preview-wrap",
+  );
+  const imageBase64Preview = getElement<HTMLImageElement>("image-base64-preview", "img#image-base64-preview");
+  const imageBase64Output = getElement<HTMLTextAreaElement>(
+    "image-base64-output",
+    "textarea#image-base64-output",
+  );
 
   // Form and result section
   const imageForm = getElement<HTMLFormElement>("image-form", "form#image-form");
@@ -321,6 +341,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     const crop = getNormalizedCrop();
     imgOutWidth.value = String(crop.width);
     imgOutHeight.value = String(crop.height);
+    updateResizeStatus();
   }
 
   function getCanvasTool(): "crop" | "paint" | null {
@@ -359,6 +380,20 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     updateImageToolMode();
   }
 
+  // Surfaces the actual output size that will be used, since it can come from three places
+  // (Enable Resize off = the crop size; on = whatever's in the Output Width/Height fields,
+  // however they got there — typed directly or via a preset).
+  function updateResizeStatus() {
+    const crop = getNormalizedCrop();
+    if (!imgEnableResize.checked) {
+      imgResizeStatus.textContent = `Resize is off — output will stay at the cropped size (${crop.width}×${crop.height}).`;
+      return;
+    }
+    const outW = Math.max(1, parseInt(imgOutWidth.value) || crop.width);
+    const outH = Math.max(1, parseInt(imgOutHeight.value) || crop.height);
+    imgResizeStatus.textContent = `Resize is on — output will be scaled to ${outW}×${outH}.`;
+  }
+
   function updateQualityLabel() {
     const q = parseFloat(imgQuality.value).toFixed(2);
     imgQualityLabel.textContent = imgOutFormat.value === "image/png" ? "Lossless" : q;
@@ -373,6 +408,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     imgEnableResize.checked = true;
     imgOutWidth.value = String(outW);
     imgOutHeight.value = String(outH);
+    updateResizeStatus();
   }
 
   function applyMaxDimensionPreset(maxDimension: number) {
@@ -385,6 +421,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     imgEnableResize.checked = true;
     imgOutWidth.value = String(outW);
     imgOutHeight.value = String(outH);
+    updateResizeStatus();
   }
 
   function applyCropDrag(sourcePoint: { x: number; y: number }) {
@@ -450,6 +487,87 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     return "jpg";
   }
 
+  /** Applies crop, redaction mask, and resize (in that order) and returns the resulting canvas. */
+  function buildFinalCanvas(): HTMLCanvasElement {
+    if (!sourceImageBitmap) throw new Error("Please load an image first.");
+
+    const crop = getNormalizedCrop();
+    const cropCanvas = document.createElement("canvas");
+    cropCanvas.width = crop.width;
+    cropCanvas.height = crop.height;
+    const cropCtx = cropCanvas.getContext("2d")!;
+    cropCtx.drawImage(sourceImageBitmap, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+
+    if (imgEnableBlur.checked && sourceImageMaskCanvas && sourceImageMaskCtx) {
+      const effectStrength = Math.max(BLUR_RADIUS_MIN, parseInt(imgBlurStrength.value) || BLUR_RADIUS_DEFAULT);
+      const maskCropCanvas = document.createElement("canvas");
+      maskCropCanvas.width = crop.width;
+      maskCropCanvas.height = crop.height;
+      const maskCropCtx = maskCropCanvas.getContext("2d")!;
+      maskCropCtx.drawImage(
+        sourceImageMaskCanvas,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        0,
+        0,
+        crop.width,
+        crop.height,
+      );
+
+      const effectCanvas = document.createElement("canvas");
+      effectCanvas.width = crop.width;
+      effectCanvas.height = crop.height;
+      const effectCtx = effectCanvas.getContext("2d")!;
+
+      if (imgRedactionMode.value === "pixelate") {
+        const pixelSize = Math.max(PIXELATE_MIN_SIZE, effectStrength);
+        const downscaleWidth = Math.max(1, Math.round(crop.width / pixelSize));
+        const downscaleHeight = Math.max(1, Math.round(crop.height / pixelSize));
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = downscaleWidth;
+        tempCanvas.height = downscaleHeight;
+        const tempCtx = tempCanvas.getContext("2d")!;
+        tempCtx.imageSmoothingEnabled = false;
+        tempCtx.drawImage(cropCanvas, 0, 0, downscaleWidth, downscaleHeight);
+        effectCtx.imageSmoothingEnabled = false;
+        effectCtx.drawImage(tempCanvas, 0, 0, downscaleWidth, downscaleHeight, 0, 0, crop.width, crop.height);
+      } else if (imgRedactionMode.value === "black") {
+        effectCtx.fillStyle = "#000000";
+        effectCtx.fillRect(0, 0, crop.width, crop.height);
+      } else {
+        effectCtx.filter = `blur(${effectStrength}px)`;
+        effectCtx.drawImage(cropCanvas, 0, 0);
+        effectCtx.filter = "none";
+      }
+
+      const maskedEffectCanvas = document.createElement("canvas");
+      maskedEffectCanvas.width = crop.width;
+      maskedEffectCanvas.height = crop.height;
+      const maskedEffectCtx = maskedEffectCanvas.getContext("2d")!;
+      maskedEffectCtx.drawImage(effectCanvas, 0, 0);
+      maskedEffectCtx.globalCompositeOperation = "destination-in";
+      maskedEffectCtx.drawImage(maskCropCanvas, 0, 0);
+      maskedEffectCtx.globalCompositeOperation = "source-over";
+
+      cropCtx.drawImage(maskedEffectCanvas, 0, 0);
+    }
+
+    let finalCanvas = cropCanvas;
+    if (imgEnableResize.checked) {
+      const outW = Math.max(1, parseInt(imgOutWidth.value) || crop.width);
+      const outH = Math.max(1, parseInt(imgOutHeight.value) || crop.height);
+      const resized = document.createElement("canvas");
+      resized.width = outW;
+      resized.height = outH;
+      resized.getContext("2d")!.drawImage(cropCanvas, 0, 0, outW, outH);
+      finalCanvas = resized;
+    }
+
+    return finalCanvas;
+  }
+
   async function canvasToBlob(canvas: HTMLCanvasElement, mime: string, quality?: number) {
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -487,6 +605,8 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     currentFile = file;
     imageResultSection.style.display = "none";
     imageOutputPlaceholder.style.display = "";
+    imageBase64PreviewWrap.style.display = "none";
+    imageCopyBase64Status.textContent = "";
     currentImageObjectUrl = URL.createObjectURL(file);
 
     sourceImageBitmap = await createImageBitmap(file);
@@ -510,6 +630,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     clearImageMask();
     updateToolAvailability();
     updateQualityLabel();
+    updateResizeStatus();
 
     revealLoadedSection();
     renderImageWorkspace();
@@ -577,19 +698,25 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
   });
 
   imgOutWidth.addEventListener("input", () => {
-    if (!imgLockAspect.checked) return;
-    const crop = getNormalizedCrop();
-    const outW = parseInt(imgOutWidth.value) || crop.width;
-    const ratio = crop.width / crop.height;
-    imgOutHeight.value = String(Math.max(1, Math.round(outW / ratio)));
+    imgEnableResize.checked = true;
+    if (imgLockAspect.checked) {
+      const crop = getNormalizedCrop();
+      const outW = parseInt(imgOutWidth.value) || crop.width;
+      const ratio = crop.width / crop.height;
+      imgOutHeight.value = String(Math.max(1, Math.round(outW / ratio)));
+    }
+    updateResizeStatus();
   });
 
   imgOutHeight.addEventListener("input", () => {
-    if (!imgLockAspect.checked) return;
-    const crop = getNormalizedCrop();
-    const outH = parseInt(imgOutHeight.value) || crop.height;
-    const ratio = crop.width / crop.height;
-    imgOutWidth.value = String(Math.max(1, Math.round(outH * ratio)));
+    imgEnableResize.checked = true;
+    if (imgLockAspect.checked) {
+      const crop = getNormalizedCrop();
+      const outH = parseInt(imgOutHeight.value) || crop.height;
+      const ratio = crop.width / crop.height;
+      imgOutWidth.value = String(Math.max(1, Math.round(outH * ratio)));
+    }
+    updateResizeStatus();
   });
 
   imgEnableBlur.addEventListener("change", () => {
@@ -685,79 +812,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     }
 
     try {
-      const crop = getNormalizedCrop();
-      const cropCanvas = document.createElement("canvas");
-      cropCanvas.width = crop.width;
-      cropCanvas.height = crop.height;
-      const cropCtx = cropCanvas.getContext("2d")!;
-      cropCtx.drawImage(sourceImageBitmap, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-
-      if (imgEnableBlur.checked && sourceImageMaskCanvas && sourceImageMaskCtx) {
-        const effectStrength = Math.max(BLUR_RADIUS_MIN, parseInt(imgBlurStrength.value) || BLUR_RADIUS_DEFAULT);
-        const maskCropCanvas = document.createElement("canvas");
-        maskCropCanvas.width = crop.width;
-        maskCropCanvas.height = crop.height;
-        const maskCropCtx = maskCropCanvas.getContext("2d")!;
-        maskCropCtx.drawImage(
-          sourceImageMaskCanvas,
-          crop.x,
-          crop.y,
-          crop.width,
-          crop.height,
-          0,
-          0,
-          crop.width,
-          crop.height,
-        );
-
-        const effectCanvas = document.createElement("canvas");
-        effectCanvas.width = crop.width;
-        effectCanvas.height = crop.height;
-        const effectCtx = effectCanvas.getContext("2d")!;
-
-        if (imgRedactionMode.value === "pixelate") {
-          const pixelSize = Math.max(PIXELATE_MIN_SIZE, effectStrength);
-          const downscaleWidth = Math.max(1, Math.round(crop.width / pixelSize));
-          const downscaleHeight = Math.max(1, Math.round(crop.height / pixelSize));
-          const tempCanvas = document.createElement("canvas");
-          tempCanvas.width = downscaleWidth;
-          tempCanvas.height = downscaleHeight;
-          const tempCtx = tempCanvas.getContext("2d")!;
-          tempCtx.imageSmoothingEnabled = false;
-          tempCtx.drawImage(cropCanvas, 0, 0, downscaleWidth, downscaleHeight);
-          effectCtx.imageSmoothingEnabled = false;
-          effectCtx.drawImage(tempCanvas, 0, 0, downscaleWidth, downscaleHeight, 0, 0, crop.width, crop.height);
-        } else if (imgRedactionMode.value === "black") {
-          effectCtx.fillStyle = "#000000";
-          effectCtx.fillRect(0, 0, crop.width, crop.height);
-        } else {
-          effectCtx.filter = `blur(${effectStrength}px)`;
-          effectCtx.drawImage(cropCanvas, 0, 0);
-          effectCtx.filter = "none";
-        }
-
-        const maskedEffectCanvas = document.createElement("canvas");
-        maskedEffectCanvas.width = crop.width;
-        maskedEffectCanvas.height = crop.height;
-        const maskedEffectCtx = maskedEffectCanvas.getContext("2d")!;
-        maskedEffectCtx.drawImage(effectCanvas, 0, 0);
-        maskedEffectCtx.globalCompositeOperation = "destination-in";
-        maskedEffectCtx.drawImage(maskCropCanvas, 0, 0);
-        maskedEffectCtx.globalCompositeOperation = "source-over";
-
-        cropCtx.drawImage(maskedEffectCanvas, 0, 0);
-      }
-
-      let finalCanvas = cropCanvas;
-      if (imgEnableResize.checked) {
-        const outW = Math.max(1, parseInt(imgOutWidth.value) || crop.width);
-        const outH = Math.max(1, parseInt(imgOutHeight.value) || crop.height);
-        const resized = document.createElement("canvas");
-        resized.width = outW;
-        resized.height = outH;
-        resized.getContext("2d")!.drawImage(cropCanvas, 0, 0, outW, outH);
-        finalCanvas = resized;
-      }
+      const finalCanvas = buildFinalCanvas();
 
       const mime = imgOutFormat.value;
       const quality = mime === "image/png" ? undefined : parseFloat(imgQuality.value);
@@ -787,6 +842,44 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     } catch (error: any) {
       console.error("Image processing failed:", error);
       alert(`Image processing failed: ${error.message || error}`);
+    }
+  });
+
+  imageCopyBase64Btn.addEventListener("click", async () => {
+    if (!currentFile || !sourceImageBitmap) {
+      alert("Please load an image first.");
+      return;
+    }
+
+    imageCopyBase64Status.textContent = "Quantizing…";
+    try {
+      const finalCanvas = buildFinalCanvas();
+      const ctx = finalCanvas.getContext("2d")!;
+      const imageData = ctx.getImageData(0, 0, finalCanvas.width, finalCanvas.height);
+      const colors = parseInt(imgBase64Colors.value, 10);
+
+      const pngBuffer = UPNG.encode([imageData.data.buffer], finalCanvas.width, finalCanvas.height, colors);
+      const blob = new Blob([pngBuffer], { type: "image/png" });
+      const dataUri: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+
+      await navigator.clipboard.writeText(dataUri);
+
+      imageBase64Preview.src = dataUri;
+      imageBase64Output.value = dataUri;
+      imageBase64PreviewWrap.style.display = "block";
+
+      imageCopyBase64Status.textContent =
+        `Copied base64 PNG string to clipboard — ${colors} colors, ${formatBytes(blob.size)} PNG ` +
+        `(${finalCanvas.width}×${finalCanvas.height}).`;
+      console.log(`Copied lightweight base64 PNG to clipboard: ${formatBytes(blob.size)}, ${colors} colors.`);
+    } catch (error: any) {
+      console.error("Base64 PNG conversion failed:", error);
+      imageCopyBase64Status.textContent = `Failed: ${error.message || error}`;
     }
   });
 

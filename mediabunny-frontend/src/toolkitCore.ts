@@ -377,6 +377,23 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     }
   });
 
+  // Paste an image straight from the clipboard (e.g. a screenshot) anywhere on the page.
+  window.addEventListener("paste", (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.kind === "file" && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      handleFiles(files);
+    }
+  });
+
   // Route one or many files. Multiple images → batch mode; otherwise load the
   // first file into its single-file workspace.
   function handleFiles(files: File[]) {

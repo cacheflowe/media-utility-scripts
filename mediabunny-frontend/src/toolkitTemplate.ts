@@ -862,7 +862,8 @@ None detected</pre
                     Lock Aspect Ratio
                   </label>
                 </fieldset>
-              
+                <small id="img-resize-status" style="display: block; color: var(--pico-muted-color)"></small>
+
                   </div>
                 </details>
 
@@ -923,7 +924,60 @@ None detected</pre
                     <small id="img-quality-label">0.86</small>
                   </div>
                 </div>
-              
+
+                  </div>
+                </details>
+
+              <details class="config-card" id="panel-img-base64">
+                  <summary class="card-header">📋 Lightweight Base64 PNG</summary>
+                  <div class="config-card-body">
+                  <p style="margin-top: 0; font-size: 0.85rem; color: var(--pico-muted-color)">
+                    Quantizes the current crop/redaction/resize result to an indexed-color PNG and copies
+                    the base64 data URI to your clipboard — paste it directly into markdown
+                    (<code>![](data:image/png;base64,...)</code>) or an &lt;img src&gt; attribute.
+                  </p>
+                  <div class="grid" style="margin-bottom: 0.5rem">
+                  <div>
+                    <label for="img-base64-colors">Palette Size (quantization)</label>
+                    <select id="img-base64-colors">
+                      <option value="4">4 colors (2-bit, tiniest)</option>
+                      <option value="8">8 colors</option>
+                      <option value="16">16 colors (4-bit)</option>
+                      <option value="32">32 colors</option>
+                      <option value="64" selected>64 colors (default)</option>
+                      <option value="128">128 colors</option>
+                      <option value="256">256 colors (8-bit, best quality)</option>
+                    </select>
+                  </div>
+                </div>
+
+                  <button type="button" id="image-copy-base64-btn" class="secondary" style="width: 100%">
+                    📋 Convert & Copy to Clipboard
+                  </button>
+                  <small id="image-copy-base64-status" style="display: block; margin-top: 0.4rem"></small>
+
+                  <div id="image-base64-preview-wrap" style="display: none; margin-top: 0.75rem">
+                    <img
+                      id="image-base64-preview"
+                      alt="Quantized PNG preview"
+                      style="
+                        max-width: 100%;
+                        display: block;
+                        margin: 0 auto;
+                        border: 1px solid var(--pico-muted-border-color);
+                        border-radius: 4px;
+                        background: repeating-conic-gradient(#8883 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+                      "
+                    />
+                    <label for="image-base64-output" style="margin-top: 0.6rem">Base64 data URI</label>
+                    <textarea
+                      id="image-base64-output"
+                      readonly
+                      rows="4"
+                      style="font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; resize: vertical"
+                    ></textarea>
+                  </div>
+
                   </div>
                 </details>
 
