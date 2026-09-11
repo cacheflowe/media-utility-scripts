@@ -1,4 +1,5 @@
 import UPNG from "upng-js";
+import { drawResizedHighQuality } from "./shared";
 
 type CropDragHandle = "move" | "nw" | "ne" | "sw" | "se" | "new";
 
@@ -558,11 +559,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     if (imgEnableResize.checked) {
       const outW = Math.max(1, parseInt(imgOutWidth.value) || crop.width);
       const outH = Math.max(1, parseInt(imgOutHeight.value) || crop.height);
-      const resized = document.createElement("canvas");
-      resized.width = outW;
-      resized.height = outH;
-      resized.getContext("2d")!.drawImage(cropCanvas, 0, 0, outW, outH);
-      finalCanvas = resized;
+      finalCanvas = drawResizedHighQuality(cropCanvas, crop.width, crop.height, outW, outH);
     }
 
     return finalCanvas;

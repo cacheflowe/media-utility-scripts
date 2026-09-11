@@ -2,6 +2,7 @@
 // images. Queue, thumbnails, and ZIP "Download all" are handled by the generic
 // batch engine; this module supplies the image-specific settings + processor.
 import { createBatchEngine } from "./batchShared";
+import { drawResizedHighQuality } from "./shared";
 
 type CreateImageBatchOptions = {
   root: Document | ShadowRoot;
@@ -83,10 +84,7 @@ export function createImageBatchWorkflow({ root }: CreateImageBatchOptions) {
       const bitmap = await createImageBitmap(file);
       try {
         const { w, h } = computeOutputSize(bitmap.width, bitmap.height);
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext("2d")!.drawImage(bitmap, 0, 0, w, h);
+        const canvas = drawResizedHighQuality(bitmap, bitmap.width, bitmap.height, w, h);
 
         const mime = outFormat.value;
         const q = mime === "image/png" ? undefined : parseFloat(quality.value);

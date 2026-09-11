@@ -20464,8 +20464,108 @@ while (i === c[++a] && i === c[++a] && i === c[++a] && i === c[++a] && i === c[+
 			};
 		})(e, n);
 	})();
-})))(), 1), Yd = 12, Xd = 8, Zd = 1, Qd = 4, $d = 4;
-function ef({ root: e, formatBytes: t, revealLoadedSection: n }) {
+})))(), 1);
+function Yd(e, t = 2) {
+	if (e === 0) return "0 Bytes";
+	let n = 1024, r = t < 0 ? 0 : t, i = [
+		"Bytes",
+		"KB",
+		"MB",
+		"GB",
+		"TB"
+	], a = Math.floor(Math.log(e) / Math.log(n));
+	return parseFloat((e / n ** a).toFixed(r)) + " " + i[a];
+}
+function Xd(e) {
+	if (isNaN(e) || !isFinite(e)) return "0:00";
+	let t = Math.floor(e / 60), n = Math.floor(e % 60), r = Math.floor(e % 1 * 100);
+	return `${t}:${n.toString().padStart(2, "0")}.${r.toString().padStart(2, "0")}`;
+}
+var Zd = {
+	1: es,
+	2: ts,
+	3: ns,
+	4: rs,
+	5: is
+}, Qd = {
+	1: "Very Low",
+	2: "Low",
+	3: "Medium",
+	4: "High",
+	5: "Very High"
+}, $d = {
+	1: "Prioritizes hyper-compression over quality. Ideal for lightweight previews.",
+	2: "Aggressive compression. Noticeable reduction in metadata and detail.",
+	3: "Balanced bitrate and visual fidelity for typical social/web sharing.",
+	4: "Excellent visual density. Great for standard professional distribution.",
+	5: "Preserves maximum fine detail and frames. Generates large files."
+}, ef = {
+	1: "~600 kbps",
+	2: "~1.5 Mbps",
+	3: "~3.5 Mbps",
+	4: "~7.5 Mbps",
+	5: "~15 Mbps"
+}, tf = {
+	1: .6,
+	2: 1.5,
+	3: 3.5,
+	4: 7.5,
+	5: 15
+};
+function nf(e, t, n, r, i) {
+	let a = e, o = t, s = n;
+	for (; o > r * 2 || s > i * 2;) {
+		let e = Math.max(r, Math.round(o / 2)), t = Math.max(i, Math.round(s / 2)), n = document.createElement("canvas");
+		n.width = e, n.height = t;
+		let c = n.getContext("2d");
+		c.imageSmoothingEnabled = !0, c.imageSmoothingQuality = "high", c.drawImage(a, 0, 0, o, s, 0, 0, e, t), a = n, o = e, s = t;
+	}
+	let c = document.createElement("canvas");
+	c.width = r, c.height = i;
+	let l = c.getContext("2d");
+	return l.imageSmoothingEnabled = !0, l.imageSmoothingQuality = "high", l.drawImage(a, 0, 0, o, s, 0, 0, r, i), c;
+}
+function rf(e, t) {
+	let n = t === "mp4" ? [{
+		value: "avc",
+		label: "H.264 / AVC (High compatibility)"
+	}, {
+		value: "hevc",
+		label: "H.265 / HEVC (High compression)"
+	}] : t === "webm" ? [
+		{
+			value: "vp9",
+			label: "VP9 (Modern WebM Open-source)"
+		},
+		{
+			value: "vp8",
+			label: "VP8 (Legacy compatibility)"
+		},
+		{
+			value: "av1",
+			label: "AV1 (Ultra Next-Gen Format)"
+		}
+	] : [];
+	e.innerHTML = "", n.forEach((t, n) => {
+		let r = document.createElement("option");
+		r.value = t.value, r.textContent = t.label, n === 0 && (r.selected = !0), e.appendChild(r);
+	});
+}
+function af(e) {
+	return e === "webm" ? {
+		format: new dd(),
+		mime: "video/webm",
+		ext: "webm"
+	} : {
+		format: new sd(),
+		mime: "video/mp4",
+		ext: "mp4"
+	};
+}
+//#endregion
+//#region src/imageWorkflow.ts
+var of = 12, sf = 8, cf = 1, lf = 4, uf = 4;
+function df({ root: e, formatBytes: t, revealLoadedSection: n }) {
 	function r(t, n) {
 		let r = e.getElementById(t);
 		if (!r) throw Error(`DOM element not found: #${t} (expected ${n})`);
@@ -20551,7 +20651,7 @@ function ef({ root: e, formatBytes: t, revealLoadedSection: n }) {
 				n.y + n.height
 			]
 		];
-		for (let [n, i, a] of r) if (Math.hypot(e - i, t - a) <= Yd) return n;
+		for (let [n, i, a] of r) if (Math.hypot(e - i, t - a) <= of) return n;
 		if (e >= n.x && e <= n.x + n.width && t >= n.y && t <= n.y + n.height) return "move";
 		let { offsetX: i, offsetY: a, drawWidth: o, drawHeight: s } = ve;
 		return e >= i && e <= i + o && t >= a && t <= a + s ? "new" : null;
@@ -20658,13 +20758,13 @@ function ef({ root: e, formatBytes: t, revealLoadedSection: n }) {
 			Se({
 				x: t,
 				y: r,
-				width: Math.max(Xd, i - t),
-				height: Math.max(Xd, a - r)
+				width: Math.max(sf, i - t),
+				height: Math.max(sf, a - r)
 			});
 			return;
 		}
 		let o = r.x, s = r.y, c = r.width, l = r.height, u = r.x + r.width, d = r.y + r.height;
-		(t === "nw" || t === "sw") && (o = Math.min(e.x, u - Xd), c = u - o), (t === "ne" || t === "se") && (c = Math.max(Xd, e.x - r.x)), (t === "nw" || t === "ne") && (s = Math.min(e.y, d - Xd), l = d - s), (t === "sw" || t === "se") && (l = Math.max(Xd, e.y - r.y)), Se({
+		(t === "nw" || t === "sw") && (o = Math.min(e.x, u - sf), c = u - o), (t === "ne" || t === "se") && (c = Math.max(sf, e.x - r.x)), (t === "nw" || t === "ne") && (s = Math.min(e.y, d - sf), l = d - s), (t === "sw" || t === "se") && (l = Math.max(sf, e.y - r.y)), Se({
 			x: o,
 			y: s,
 			width: c,
@@ -20680,13 +20780,13 @@ function ef({ root: e, formatBytes: t, revealLoadedSection: n }) {
 		t.width = e.width, t.height = e.height;
 		let n = t.getContext("2d");
 		if (n.drawImage(pe, e.x, e.y, e.width, e.height, 0, 0, e.width, e.height), O.checked && me && L) {
-			let r = Math.max(Zd, parseInt(ee.value) || Qd), i = document.createElement("canvas");
+			let r = Math.max(cf, parseInt(ee.value) || lf), i = document.createElement("canvas");
 			i.width = e.width, i.height = e.height, i.getContext("2d").drawImage(me, e.x, e.y, e.width, e.height, 0, 0, e.width, e.height);
 			let a = document.createElement("canvas");
 			a.width = e.width, a.height = e.height;
 			let o = a.getContext("2d");
 			if (k.value === "pixelate") {
-				let n = Math.max($d, r), i = Math.max(1, Math.round(e.width / n)), a = Math.max(1, Math.round(e.height / n)), s = document.createElement("canvas");
+				let n = Math.max(uf, r), i = Math.max(1, Math.round(e.width / n)), a = Math.max(1, Math.round(e.height / n)), s = document.createElement("canvas");
 				s.width = i, s.height = a;
 				let c = s.getContext("2d");
 				c.imageSmoothingEnabled = !1, c.drawImage(t, 0, 0, i, a), o.imageSmoothingEnabled = !1, o.drawImage(s, 0, 0, i, a, 0, 0, e.width, e.height);
@@ -20698,8 +20798,8 @@ function ef({ root: e, formatBytes: t, revealLoadedSection: n }) {
 		}
 		let r = t;
 		if (x.checked) {
-			let n = Math.max(1, parseInt(S.value) || e.width), i = Math.max(1, parseInt(C.value) || e.height), a = document.createElement("canvas");
-			a.width = n, a.height = i, a.getContext("2d").drawImage(t, 0, 0, n, i), r = a;
+			let n = Math.max(1, parseInt(S.value) || e.width), i = Math.max(1, parseInt(C.value) || e.height);
+			r = nf(t, e.width, e.height, n, i);
 		}
 		return r;
 	}
@@ -20845,94 +20945,8 @@ function ef({ root: e, formatBytes: t, revealLoadedSection: n }) {
 	};
 }
 //#endregion
-//#region src/shared.ts
-function tf(e, t = 2) {
-	if (e === 0) return "0 Bytes";
-	let n = 1024, r = t < 0 ? 0 : t, i = [
-		"Bytes",
-		"KB",
-		"MB",
-		"GB",
-		"TB"
-	], a = Math.floor(Math.log(e) / Math.log(n));
-	return parseFloat((e / n ** a).toFixed(r)) + " " + i[a];
-}
-function nf(e) {
-	if (isNaN(e) || !isFinite(e)) return "0:00";
-	let t = Math.floor(e / 60), n = Math.floor(e % 60), r = Math.floor(e % 1 * 100);
-	return `${t}:${n.toString().padStart(2, "0")}.${r.toString().padStart(2, "0")}`;
-}
-var rf = {
-	1: es,
-	2: ts,
-	3: ns,
-	4: rs,
-	5: is
-}, af = {
-	1: "Very Low",
-	2: "Low",
-	3: "Medium",
-	4: "High",
-	5: "Very High"
-}, of = {
-	1: "Prioritizes hyper-compression over quality. Ideal for lightweight previews.",
-	2: "Aggressive compression. Noticeable reduction in metadata and detail.",
-	3: "Balanced bitrate and visual fidelity for typical social/web sharing.",
-	4: "Excellent visual density. Great for standard professional distribution.",
-	5: "Preserves maximum fine detail and frames. Generates large files."
-}, sf = {
-	1: "~600 kbps",
-	2: "~1.5 Mbps",
-	3: "~3.5 Mbps",
-	4: "~7.5 Mbps",
-	5: "~15 Mbps"
-}, cf = {
-	1: .6,
-	2: 1.5,
-	3: 3.5,
-	4: 7.5,
-	5: 15
-};
-function lf(e, t) {
-	let n = t === "mp4" ? [{
-		value: "avc",
-		label: "H.264 / AVC (High compatibility)"
-	}, {
-		value: "hevc",
-		label: "H.265 / HEVC (High compression)"
-	}] : t === "webm" ? [
-		{
-			value: "vp9",
-			label: "VP9 (Modern WebM Open-source)"
-		},
-		{
-			value: "vp8",
-			label: "VP8 (Legacy compatibility)"
-		},
-		{
-			value: "av1",
-			label: "AV1 (Ultra Next-Gen Format)"
-		}
-	] : [];
-	e.innerHTML = "", n.forEach((t, n) => {
-		let r = document.createElement("option");
-		r.value = t.value, r.textContent = t.label, n === 0 && (r.selected = !0), e.appendChild(r);
-	});
-}
-function uf(e) {
-	return e === "webm" ? {
-		format: new dd(),
-		mime: "video/webm",
-		ext: "webm"
-	} : {
-		format: new sd(),
-		mime: "video/mp4",
-		ext: "mp4"
-	};
-}
-//#endregion
 //#region src/trimController.ts
-function df(e) {
+function ff(e) {
 	let { media: t, enable: n, controlsGroup: r, startInput: i, endInput: a, startLabel: o, endLabel: s, selectionBar: c, onChange: l } = e, u = 0, d = !1;
 	function f(e, t) {
 		o.textContent = `${e.toFixed(2)}s`, s.textContent = `${t.toFixed(2)}s`, u && (c.style.left = `${e / u * 100}%`, c.style.width = `${(t - e) / u * 100}%`), l?.();
@@ -20978,7 +20992,7 @@ function df(e) {
 }
 //#endregion
 //#region src/audioWorkflow.ts
-var ff = {
+var pf = {
 	mp3: {
 		makeFormat: () => new fd(),
 		codec: "mp3",
@@ -21015,7 +21029,7 @@ var ff = {
 		lossless: !0
 	}
 };
-function pf({ root: e, formatBytes: t, revealLoadedSection: n }) {
+function mf({ root: e, formatBytes: t, revealLoadedSection: n }) {
 	function r(t, n) {
 		let r = e.getElementById(t);
 		if (!r) throw Error(`DOM element not found: #${t} (expected ${n})`);
@@ -21026,7 +21040,7 @@ function pf({ root: e, formatBytes: t, revealLoadedSection: n }) {
 		N &&= (URL.revokeObjectURL(N), null), P &&= (URL.revokeObjectURL(P), null);
 	}
 	function de() {
-		return ff[x.value] || ff.mp3;
+		return pf[x.value] || pf.mp3;
 	}
 	function fe() {
 		if (!M) {
@@ -21046,7 +21060,7 @@ function pf({ root: e, formatBytes: t, revealLoadedSection: n }) {
 	}
 	async function pe() {
 		for (let e of Array.from(x.options)) {
-			let t = ff[e.value];
+			let t = pf[e.value];
 			if (!t) continue;
 			let n = !1;
 			try {
@@ -21138,16 +21152,16 @@ function pf({ root: e, formatBytes: t, revealLoadedSection: n }) {
 				return;
 			}
 			let i = await r.getCodec();
-			if (M = await oe.computeDuration(), l.textContent = String(i || "unknown").toUpperCase(), c.textContent = nf(M), u.textContent = r.sampleRate ? `${r.sampleRate.toLocaleString()} Hz` : "-", d.textContent = String(r.numberOfChannels || "-"), M > 0) {
+			if (M = await oe.computeDuration(), l.textContent = String(i || "unknown").toUpperCase(), c.textContent = Xd(M), u.textContent = r.sampleRate ? `${r.sampleRate.toLocaleString()} Hz` : "-", d.textContent = String(r.numberOfChannels || "-"), M > 0) {
 				let t = e.size * 8 / M / 1e3;
 				f.textContent = `~${Math.round(t)} kbps`;
 			} else f.textContent = "-";
-			z.setDuration(M), console.log(`Loaded audio: "${e.name}" — ${nf(M)}, ${r.sampleRate}Hz, ${r.numberOfChannels}ch.`), n(), I();
+			z.setDuration(M), console.log(`Loaded audio: "${e.name}" — ${Xd(M)}, ${r.sampleRate}Hz, ${r.numberOfChannels}ch.`), n(), I();
 		} catch (e) {
 			console.error("Error analyzing audio file: ", e), alert(`Could not read audio metadata: ${e.message || e}`);
 		}
 	}
-	let z = df({
+	let z = ff({
 		media: i,
 		enable: m,
 		controlsGroup: h,
@@ -21221,7 +21235,7 @@ function pf({ root: e, formatBytes: t, revealLoadedSection: n }) {
 }
 //#endregion
 //#region src/zip.ts
-var mf = (() => {
+var hf = (() => {
 	let e = /* @__PURE__ */ new Uint32Array(256);
 	for (let t = 0; t < 256; t++) {
 		let n = t;
@@ -21230,71 +21244,71 @@ var mf = (() => {
 	}
 	return e;
 })();
-function hf(e) {
+function gf(e) {
 	let t = 4294967295;
-	for (let n = 0; n < e.length; n++) t = mf[(t ^ e[n]) & 255] ^ t >>> 8;
+	for (let n = 0; n < e.length; n++) t = hf[(t ^ e[n]) & 255] ^ t >>> 8;
 	return (t ^ 4294967295) >>> 0;
 }
-var gf = (e) => new Uint8Array([e & 255, e >>> 8 & 255]), _f = (e) => new Uint8Array([
+var _f = (e) => new Uint8Array([e & 255, e >>> 8 & 255]), vf = (e) => new Uint8Array([
 	e & 255,
 	e >>> 8 & 255,
 	e >>> 16 & 255,
 	e >>> 24 & 255
 ]);
-function vf(e) {
+function yf(e) {
 	let t = 0;
 	for (let n of e) t += n.length;
 	let n = new Uint8Array(t), r = 0;
 	for (let t of e) n.set(t, r), r += t.length;
 	return n;
 }
-function yf(e) {
+function bf(e) {
 	let t = new TextEncoder(), n = [], r = [], i = 0, a = 2048;
 	for (let o of e) {
-		let e = t.encode(o.name), s = hf(o.data), c = o.data.length, l = vf([
-			_f(67324752),
-			gf(20),
-			gf(a),
-			gf(0),
-			gf(0),
-			gf(33),
-			_f(s),
-			_f(c),
-			_f(c),
-			gf(e.length),
-			gf(0),
+		let e = t.encode(o.name), s = gf(o.data), c = o.data.length, l = yf([
+			vf(67324752),
+			_f(20),
+			_f(a),
+			_f(0),
+			_f(0),
+			_f(33),
+			vf(s),
+			vf(c),
+			vf(c),
+			_f(e.length),
+			_f(0),
 			e
 		]);
-		n.push(l, o.data), r.push(vf([
-			_f(33639248),
-			gf(20),
-			gf(20),
-			gf(a),
-			gf(0),
-			gf(0),
-			gf(33),
-			_f(s),
-			_f(c),
-			_f(c),
-			gf(e.length),
-			gf(0),
-			gf(0),
-			gf(0),
-			gf(0),
+		n.push(l, o.data), r.push(yf([
+			vf(33639248),
+			_f(20),
+			_f(20),
+			_f(a),
 			_f(0),
-			_f(i),
+			_f(0),
+			_f(33),
+			vf(s),
+			vf(c),
+			vf(c),
+			_f(e.length),
+			_f(0),
+			_f(0),
+			_f(0),
+			_f(0),
+			vf(0),
+			vf(i),
 			e
 		])), i += l.length + c;
 	}
-	let o = vf(r), s = vf([
-		_f(101010256),
-		gf(0),
-		gf(0),
-		gf(e.length),
-		gf(e.length),
-		_f(o.length),
-		_f(i),
-		gf(0)
+	let o = yf(r), s = yf([
+		vf(101010256),
+		_f(0),
+		_f(0),
+		_f(e.length),
+		_f(e.length),
+		vf(o.length),
+		vf(i),
+		_f(0)
 	]);
 	return new Blob([
 		...n,
@@ -21304,13 +21318,13 @@ function yf(e) {
 }
 //#endregion
 //#region src/batchShared.ts
-function bf(e) {
+function xf(e) {
 	let { elements: t, zipName: n, processButtonLabel: r, makeThumb: i, process: a } = e, o = [], s = [];
 	function c() {
 		o.forEach((e) => e.url && URL.revokeObjectURL(e.url)), s.forEach((e) => e.startsWith("blob:") && URL.revokeObjectURL(e)), s = [];
 	}
 	function l(e) {
-		return e.status === "pending" ? "Pending" : e.status === "processing" ? `Processing… ${Math.round(e.progress * 100)}%` : e.status === "error" ? `Error: ${e.error || "failed"}` : e.blob ? tf(e.blob.size) : "Done";
+		return e.status === "pending" ? "Pending" : e.status === "processing" ? `Processing… ${Math.round(e.progress * 100)}%` : e.status === "error" ? `Error: ${e.error || "failed"}` : e.blob ? Yd(e.blob.size) : "Done";
 	}
 	function u() {
 		t.count.textContent = String(o.length), t.queue.innerHTML = "", o.forEach((e, n) => {
@@ -21330,7 +21344,7 @@ function bf(e) {
 		t.thumbs.innerHTML = "";
 		let n = 0;
 		for (let t of e) n += t.size;
-		t.inputCount.textContent = String(e.length), t.totalSize.textContent = tf(n);
+		t.inputCount.textContent = String(e.length), t.totalSize.textContent = Yd(n);
 		for (let n of e) {
 			let e = document.createElement("img");
 			e.className = "batch-thumb", e.alt = n.name, e.title = n.name, t.thumbs.appendChild(e), i(n).then((t) => {
@@ -21373,8 +21387,8 @@ function bf(e) {
 						data: new Uint8Array(await n.blob.arrayBuffer())
 					});
 				}
-				let i = yf(r), a = URL.createObjectURL(i), o = document.createElement("a");
-				o.href = a, o.download = n, o.style.display = "none", document.body.appendChild(o), o.click(), o.remove(), setTimeout(() => URL.revokeObjectURL(a), 1e4), console.log(`📦 Zipped ${r.length} file(s) → ${tf(i.size)}.`);
+				let i = bf(r), a = URL.createObjectURL(i), o = document.createElement("a");
+				o.href = a, o.download = n, o.style.display = "none", document.body.appendChild(o), o.click(), o.remove(), setTimeout(() => URL.revokeObjectURL(a), 1e4), console.log(`📦 Zipped ${r.length} file(s) → ${Yd(i.size)}.`);
 			} catch (e) {
 				console.error("Failed to build zip:", e), alert(`Could not build the zip: ${e?.message || e}`);
 			} finally {
@@ -21398,13 +21412,13 @@ function bf(e) {
 }
 //#endregion
 //#region src/imageBatchWorkflow.ts
-var xf = {
+var Sf = {
 	"image/jpeg": "jpg",
 	"image/png": "png",
 	"image/webp": "webp",
 	"image/avif": "avif"
 };
-function Sf({ root: e }) {
+function Cf({ root: e }) {
 	let t = (t) => e.getElementById(t), n = t("batch-out-format"), r = t("batch-quality"), i = t("batch-quality-label"), a = t("batch-enable-resize"), o = t("batch-resize-controls"), s = t("batch-maxdim-preset"), c = t("batch-maxdim");
 	function l() {
 		let e = n.value === "image/png";
@@ -21439,7 +21453,7 @@ function Sf({ root: e }) {
 	}), c.addEventListener("input", () => {
 		c.value !== s.value && (s.value = "");
 	}), l();
-	let p = bf({
+	let p = xf({
 		elements: {
 			thumbs: t("batch-thumbs"),
 			inputCount: t("batch-input-count"),
@@ -21455,9 +21469,7 @@ function Sf({ root: e }) {
 		process: async (e) => {
 			let t = await createImageBitmap(e);
 			try {
-				let { w: i, h: a } = d(t.width, t.height), o = document.createElement("canvas");
-				o.width = i, o.height = a, o.getContext("2d").drawImage(t, 0, 0, i, a);
-				let s = n.value, c = s === "image/png" ? void 0 : parseFloat(r.value), l = xf[s] || "jpg", p;
+				let { w: i, h: a } = d(t.width, t.height), o = nf(t, t.width, t.height, i, a), s = n.value, c = s === "image/png" ? void 0 : parseFloat(r.value), l = Sf[s] || "jpg", p;
 				try {
 					p = await f(o, s, c);
 				} catch {
@@ -21481,7 +21493,7 @@ function Sf({ root: e }) {
 }
 //#endregion
 //#region src/videoBatchWorkflow.ts
-function Cf(e) {
+function wf(e) {
 	return new Promise((t) => {
 		let n = document.createElement("video");
 		n.muted = !0, n.preload = "metadata", n.playsInline = !0;
@@ -21504,11 +21516,11 @@ function Cf(e) {
 		}), n.addEventListener("error", () => a(null)), setTimeout(() => a(null), 5e3), n.src = r;
 	});
 }
-function wf({ root: e }) {
+function Tf({ root: e }) {
 	let t = (t) => e.getElementById(t), n = t("vbatch-out-format"), r = t("vbatch-out-codec"), i = t("vbatch-quality"), a = t("vbatch-quality-val"), o = t("vbatch-quality-rate"), s = t("vbatch-mute"), c = t("vbatch-enable-resize"), l = t("vbatch-resize-controls"), u = t("vbatch-maxdim-preset"), d = t("vbatch-maxdim");
 	function f() {
 		let e = parseInt(i.value);
-		a.textContent = af[e] || "Medium", o.textContent = sf[e] || "";
+		a.textContent = Qd[e] || "Medium", o.textContent = ef[e] || "";
 	}
 	function p() {
 		if (!c.checked) return null;
@@ -21526,14 +21538,14 @@ function wf({ root: e }) {
 			h: Math.max(2, Math.round(t * i) & -2)
 		};
 	}
-	n.addEventListener("change", () => lf(r, n.value)), i.addEventListener("input", f), c.addEventListener("change", () => {
+	n.addEventListener("change", () => rf(r, n.value)), i.addEventListener("input", f), c.addEventListener("change", () => {
 		l.style.display = c.checked ? "block" : "none";
 	}), u.addEventListener("change", () => {
 		u.value && (d.value = u.value);
 	}), d.addEventListener("input", () => {
 		d.value !== u.value && (u.value = "");
 	}), f();
-	let h = bf({
+	let h = xf({
 		elements: {
 			thumbs: t("vbatch-thumbs"),
 			inputCount: t("vbatch-input-count"),
@@ -21545,20 +21557,20 @@ function wf({ root: e }) {
 		},
 		zipName: "media-converter-videos.zip",
 		processButtonLabel: (e) => `🎬 Process All Videos (${e})`,
-		makeThumb: Cf,
+		makeThumb: wf,
 		process: async (e, t) => {
 			let a = new Us({
 				formats: so,
 				source: new Aa(e)
 			});
 			try {
-				let o = await a.getPrimaryVideoTrack(), c = o ? await o.getDisplayWidth() : 0, l = o ? await o.getDisplayHeight() : 0, u = uf(n.value), d = new Cd({
+				let o = await a.getPrimaryVideoTrack(), c = o ? await o.getDisplayWidth() : 0, l = o ? await o.getDisplayHeight() : 0, u = af(n.value), d = new Cd({
 					format: u.format,
 					target: new Su()
 				}), f = {
 					forceTranscode: !0,
 					codec: r.value,
-					bitrate: rf[parseInt(i.value)] || rf[3]
+					bitrate: Zd[parseInt(i.value)] || Zd[3]
 				}, h = m(c, l);
 				h && (f.width = h.w, f.height = h.h, f.fit = "contain");
 				let g = s.checked ? { discard: !0 } : { forceTranscode: !1 }, _ = await Od.init({
@@ -21589,8 +21601,8 @@ function wf({ root: e }) {
 }
 //#endregion
 //#region src/toolkitCore.ts
-var Tf = [], Ef = !1;
-function Df(e) {
+var Ef = [], Df = !1;
+function Of(e) {
 	if (typeof e != "object" || !e) return String(e);
 	try {
 		return JSON.stringify(e);
@@ -21598,19 +21610,19 @@ function Df(e) {
 		return String(e);
 	}
 }
-function Of() {
-	if (Ef) return;
-	Ef = !0;
+function kf() {
+	if (Df) return;
+	Df = !0;
 	let e = console.log, t = console.warn, n = console.error, r = (e, t, n) => {
-		if (n.apply(console, t), Tf.length === 0) return;
-		let r = (/* @__PURE__ */ new Date()).toLocaleTimeString(), i = t.map(Df).join(" ").replace(/</g, "&lt;").replace(/>/g, "&gt;"), a = "#a6e22e";
+		if (n.apply(console, t), Ef.length === 0) return;
+		let r = (/* @__PURE__ */ new Date()).toLocaleTimeString(), i = t.map(Of).join(" ").replace(/</g, "&lt;").replace(/>/g, "&gt;"), a = "#a6e22e";
 		e === "warn" && (a = "#fd971f"), e === "error" && (a = "#f92672");
-		for (let e of Tf) e.innerHTML += `<div style="color: ${a}">[${r}] ${i}</div>`, e.scrollTop = e.scrollHeight;
+		for (let e of Ef) e.innerHTML += `<div style="color: ${a}">[${r}] ${i}</div>`, e.scrollTop = e.scrollHeight;
 	};
 	console.log = (...t) => r("log", t, e), console.warn = (...e) => r("warn", e, t), console.error = (...e) => r("error", e, n);
 }
-function kf(e, { themeElement: t }) {
-	Of();
+function Af(e, { themeElement: t }) {
+	kf();
 	let n = [
 		e.getElementById("log-console"),
 		e.getElementById("log-console-img"),
@@ -21618,7 +21630,7 @@ function kf(e, { themeElement: t }) {
 		e.getElementById("log-console-batch"),
 		e.getElementById("log-console-vbatch")
 	].filter((e) => e != null);
-	n.forEach((e) => Tf.push(e)), [
+	n.forEach((e) => Ef.push(e)), [
 		e.getElementById("clear-console-btn"),
 		e.getElementById("clear-console-btn-img"),
 		e.getElementById("clear-console-btn-audio"),
@@ -21671,15 +21683,15 @@ function kf(e, { themeElement: t }) {
 	function at() {
 		c.style.display = "block", c.scrollIntoView({ behavior: "smooth" });
 	}
-	Ze = ef({
+	Ze = df({
 		root: e,
-		formatBytes: tf,
+		formatBytes: Yd,
 		revealLoadedSection: at
-	}), Qe = pf({
+	}), Qe = mf({
 		root: e,
-		formatBytes: tf,
+		formatBytes: Yd,
 		revealLoadedSection: at
-	}), $e = Sf({ root: e }), et = wf({ root: e }), o.addEventListener("click", () => s.click()), ["dragenter", "dragover"].forEach((e) => {
+	}), $e = Cf({ root: e }), et = Tf({ root: e }), o.addEventListener("click", () => s.click()), ["dragenter", "dragover"].forEach((e) => {
 		o.addEventListener(e, (e) => {
 			e.preventDefault(), o.classList.add("dragging");
 		}, !1);
@@ -21754,7 +21766,7 @@ function kf(e, { themeElement: t }) {
 		We && t !== "video" && (We.dispose(), We = null), t === "video" ? await ut(e) : t === "image" ? (ct("image"), Qe?.dispose(), await Ze?.load(e)) : (ct("audio"), Ze?.dispose(), await Qe?.load(e));
 	}
 	async function ut(e) {
-		Ue = e, ct("video"), console.log(`Loading video file: "${e.name}" (${tf(e.size)})`), Ze?.dispose(), Qe?.dispose(), Le.style.display = "none", Be.src && URL.revokeObjectURL(Be.src), Be.src = "", m.src = URL.createObjectURL(e), h.textContent = e.name, g.textContent = tf(e.size);
+		Ue = e, ct("video"), console.log(`Loading video file: "${e.name}" (${Yd(e.size)})`), Ze?.dispose(), Qe?.dispose(), Le.style.display = "none", Be.src && URL.revokeObjectURL(Be.src), Be.src = "", m.src = URL.createObjectURL(e), h.textContent = e.name, g.textContent = Yd(e.size);
 		try {
 			We && We.dispose(), We = new Us({
 				formats: so,
@@ -21768,7 +21780,7 @@ function kf(e, { themeElement: t }) {
 			if (i) {
 				Ge = await i.getDisplayWidth(), Ke = await i.getDisplayHeight();
 				let e = await i.getCodec(), t = await i.getCodedWidth(), n = await i.getCodedHeight(), a = await i.getRotation();
-				qe = await We.computeDuration(), _.textContent = nf(qe), v.textContent = `${Ge}x${Ke}`, y.textContent = `${(Ge / Ke).toFixed(2)}:1`, b.textContent = String(e).toUpperCase();
+				qe = await We.computeDuration(), _.textContent = Xd(qe), v.textContent = `${Ge}x${Ke}`, y.textContent = `${(Ge / Ke).toFixed(2)}:1`, b.textContent = String(e).toUpperCase();
 				try {
 					let e = await i.computePacketStats(300);
 					e && e.averagePacketRate ? (Je = e.averagePacketRate, x.textContent = `${e.averagePacketRate.toFixed(2)} fps`, console.log(`Computed original FPS estimate: ${e.averagePacketRate} fps from prefix stats.`)) : x.textContent = "Unknown";
@@ -21779,7 +21791,7 @@ function kf(e, { themeElement: t }) {
 			} else console.warn("No video track detected inside this clip! Options might behave differently."), v.textContent = "Audio Only", y.textContent = "-", b.textContent = "-";
 			try {
 				let e = await We.getMetadataTags(), t = {};
-				for (let [n, r] of Object.entries(e)) r instanceof Uint8Array ? t[n] = `[Binary Array: ${tf(r.length)}]` : Array.isArray(r) ? t[n] = `[Array of ${r.length} entries]` : t[n] = r;
+				for (let [n, r] of Object.entries(e)) r instanceof Uint8Array ? t[n] = `[Binary Array: ${Yd(r.length)}]` : Array.isArray(r) ? t[n] = `[Array of ${r.length} entries]` : t[n] = r;
 				C.textContent = Object.keys(t).length > 0 ? JSON.stringify(t, null, 2) : "No tags parsed from metadata container.";
 			} catch {
 				C.textContent = "Unabled to parse metadata block tags.";
@@ -21789,7 +21801,7 @@ function kf(e, { themeElement: t }) {
 			console.error("An error occurred during video analysis profiling: ", e), alert(`Could not process video metadata: ${e.message || e}`);
 		}
 	}
-	let dt = df({
+	let dt = ff({
 		media: m,
 		enable: T,
 		controlsGroup: E,
@@ -21938,11 +21950,11 @@ function kf(e, { themeElement: t }) {
 	}), window.addEventListener("pointerup", () => {
 		gt = null;
 	}), M.addEventListener("change", () => {
-		lf(se, M.value);
+		rf(se, M.value);
 	});
 	function xt() {
 		let e = parseInt(N.value);
-		P.textContent = af[e] || "Medium", F && (F.textContent = sf[e] || ""), ce.textContent = of[e] || "";
+		P.textContent = Qd[e] || "Medium", F && (F.textContent = ef[e] || ""), ce.textContent = $d[e] || "";
 	}
 	N.addEventListener("input", xt), xt();
 	let St = e.getElementById("size-estimate");
@@ -21974,11 +21986,11 @@ function kf(e, { themeElement: t }) {
 		let i;
 		if (W.checked) i = parseInt(xe.value) || 0;
 		else {
-			let e = cf[parseInt(N.value)] ?? 3.5, a = t && n ? t * n / (1920 * 1080) : 1, o = r / 30;
+			let e = tf[parseInt(N.value)] ?? 3.5, a = t && n ? t * n / (1920 * 1080) : 1, o = r / 30;
 			i = e * 1e6 * a * o;
 		}
 		let a = 0;
-		Ce.checked ? a = parseInt(Ee.value) || 0 : Se.checked && Ye && (a = 128e3), St.textContent = "≈ " + tf((i + a) * e / 8);
+		Ce.checked ? a = parseInt(Ee.value) || 0 : Se.checked && Ye && (a = 128e3), St.textContent = "≈ " + Yd((i + a) * e / 8);
 	}
 	w.addEventListener("input", Ct), w.addEventListener("change", Ct);
 	function wt() {
@@ -22006,7 +22018,7 @@ function kf(e, { themeElement: t }) {
 					!isNaN(e) && e > 1e3 ? (a.bitrate = e, console.log(`Using custom target video bitrate: ${(e / 1e6).toFixed(2)} Mbps (${e} bps)`)) : (a.bitrate = ns, console.log("Custom bitrate was invalid. Defaulting to Medium Preset Quality."));
 				} else {
 					let e = parseInt(N.value);
-					a.bitrate = rf[e] || ns, console.log(`Using video quality preset level: ${e} (${af[e] || "Medium"})`);
+					a.bitrate = Zd[e] || ns, console.log(`Using video quality preset level: ${e} (${Qd[e] || "Medium"})`);
 				}
 				if (de.checked && (a.crop = {
 					left: ht.x,
@@ -22077,7 +22089,7 @@ function kf(e, { themeElement: t }) {
 			let d = e ? "video/mp4" : "video/webm", f = e ? "mp4" : "webm", p = new Blob([u], { type: d }), m = URL.createObjectURL(p);
 			Re.href = m;
 			let h = Ue.name.lastIndexOf(".");
-			Re.download = `${h > 0 ? Ue.name.slice(0, h) : Ue.name}_web_export.${f}`, ze.textContent = `Size: ${tf(p.size)}`, Be.src = m, console.log(`🎉 Transcoding successfully finished! Outfile Size: ${tf(p.size)}.`), Le.style.display = "block", Le.scrollIntoView({ behavior: "smooth" });
+			Re.download = `${h > 0 ? Ue.name.slice(0, h) : Ue.name}_web_export.${f}`, ze.textContent = `Size: ${Yd(p.size)}`, Be.src = m, console.log(`🎉 Transcoding successfully finished! Outfile Size: ${Yd(p.size)}.`), Le.style.display = "block", Le.scrollIntoView({ behavior: "smooth" });
 		} catch (e) {
 			e.name === "ConversionCanceledError" || e.message?.includes("canceled") ? console.warn("Transcoding canceled by the operator.") : (console.error("Transcoder failure: ", e), alert(`Conversion failure: ${e.message || e}`));
 		} finally {
@@ -22089,15 +22101,15 @@ function kf(e, { themeElement: t }) {
 }
 //#endregion
 //#region src/component.ts
-var Af = u.replace(/:root\b/g, ":host"), jf = "\n:host { display: block; }\n.mb-app {\n  font-family: var(--pico-font-family, system-ui, sans-serif);\n  font-size: var(--pico-font-size, 100%);\n  line-height: var(--pico-line-height, 1.5);\n  color: var(--pico-color);\n  background-color: var(--pico-background-color);\n  -webkit-font-smoothing: antialiased;\n  padding: 0.5rem 1.5rem 2rem;\n}\n", Mf = class extends HTMLElement {
+var jf = u.replace(/:root\b/g, ":host"), Mf = "\n:host { display: block; }\n.mb-app {\n  font-family: var(--pico-font-family, system-ui, sans-serif);\n  font-size: var(--pico-font-size, 100%);\n  line-height: var(--pico-line-height, 1.5);\n  color: var(--pico-color);\n  background-color: var(--pico-background-color);\n  -webkit-font-smoothing: antialiased;\n  padding: 0.5rem 1.5rem 2rem;\n}\n", Nf = class extends HTMLElement {
 	connectedCallback() {
 		if (this.shadowRoot) return;
 		let e = this.attachShadow({ mode: "open" }), t = document.createElement("style");
-		t.textContent = Af + jf, e.appendChild(t);
+		t.textContent = jf + Mf, e.appendChild(t);
 		let n = document.createElement("div");
-		n.className = "mb-app", n.setAttribute("data-theme", this.getAttribute("theme") || "dark"), n.innerHTML = d, e.appendChild(n), kf(e, { themeElement: n });
+		n.className = "mb-app", n.setAttribute("data-theme", this.getAttribute("theme") || "dark"), n.innerHTML = d, e.appendChild(n), Af(e, { themeElement: n });
 	}
 };
-customElements.get("media-converter") || customElements.define("media-converter", Mf), customElements.get("mediabunny-toolkit") || customElements.define("mediabunny-toolkit", class extends Mf {});
+customElements.get("media-converter") || customElements.define("media-converter", Nf), customElements.get("mediabunny-toolkit") || customElements.define("mediabunny-toolkit", class extends Nf {});
 //#endregion
-export { Mf as MediaConverter };
+export { Nf as MediaConverter };

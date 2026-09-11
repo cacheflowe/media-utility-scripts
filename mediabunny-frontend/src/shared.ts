@@ -65,6 +65,50 @@ export const QUALITY_RATE: Record<number, string> = {
 /** Same presets as Mbps numbers, for output-size estimates (1080p30 reference). */
 export const QUALITY_MBPS: Record<number, number> = { 1: 0.6, 2: 1.5, 3: 3.5, 4: 7.5, 5: 15 };
 
+// --- Canvas resizing ---
+/**
+ * Downscales in halving steps (mipmap-style) instead of one single-pass `drawImage`.
+ * A single big downscale aliases badly in Canvas2D — fine detail (especially text)
+ * turns to mush — because browsers don't do proper minification filtering in one shot.
+ * Repeatedly halving keeps each step's ratio small enough that the browser's own
+ * smoothing stays accurate, then a final draw lands on the exact target size.
+ */
+export function drawResizedHighQuality(
+  source: CanvasImageSource,
+  srcWidth: number,
+  srcHeight: number,
+  destWidth: number,
+  destHeight: number,
+): HTMLCanvasElement {
+  let current: CanvasImageSource = source;
+  let width = srcWidth;
+  let height = srcHeight;
+
+  while (width > destWidth * 2 || height > destHeight * 2) {
+    const nextWidth = Math.max(destWidth, Math.round(width / 2));
+    const nextHeight = Math.max(destHeight, Math.round(height / 2));
+    const step = document.createElement("canvas");
+    step.width = nextWidth;
+    step.height = nextHeight;
+    const stepCtx = step.getContext("2d")!;
+    stepCtx.imageSmoothingEnabled = true;
+    stepCtx.imageSmoothingQuality = "high";
+    stepCtx.drawImage(current, 0, 0, width, height, 0, 0, nextWidth, nextHeight);
+    current = step;
+    width = nextWidth;
+    height = nextHeight;
+  }
+
+  const finalCanvas = document.createElement("canvas");
+  finalCanvas.width = destWidth;
+  finalCanvas.height = destHeight;
+  const finalCtx = finalCanvas.getContext("2d")!;
+  finalCtx.imageSmoothingEnabled = true;
+  finalCtx.imageSmoothingQuality = "high";
+  finalCtx.drawImage(current, 0, 0, width, height, 0, 0, destWidth, destHeight);
+  return finalCanvas;
+}
+
 // --- Video container / codec helpers ---
 export type VideoContainer = "mp4" | "webm";
 
