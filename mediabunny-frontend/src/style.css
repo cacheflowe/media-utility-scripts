@@ -511,7 +511,9 @@ details.config-card[open] > summary.card-header::after {
   border: none;
   padding: 0.5rem;
   cursor: pointer;
-  color: var(--pico-color);
+  /* Inherit the page text color: Pico redefines --pico-color on buttons as the
+     inverse (white), which made the icon invisible in light mode */
+  color: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;

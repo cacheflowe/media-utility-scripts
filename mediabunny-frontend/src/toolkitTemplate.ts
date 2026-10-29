@@ -39,7 +39,7 @@ export const TOOLKIT_MARKUP = /*html*/ `
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M12 3v2.25m0 13.5V21M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M3 12h2.25m13.5 0H21M6.34 17.66l-1.42 1.42m12.72-12.72l-1.42 1.42M12 7.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9z"
+                d="M12 3v2.25M12 18.75V21M3 12h2.25M18.75 12H21M5.636 5.636l1.591 1.591M18.364 5.636l-1.591 1.591M5.636 18.364l1.591-1.591M18.364 18.364l-1.591-1.591M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0z"
               />
             </svg>
           </button>
@@ -241,7 +241,8 @@ None detected</pre
                           font-size: 0.75rem;
                         "
                       >
-                        💡 Drag the left/right handles above to set your trimming window.
+                        💡 Drag the left/right handles above to set your trimming window. Hold
+                        <kbd>Shift</kbd> while dragging for frame-by-frame precision.
                       </small>
                     </div>
 

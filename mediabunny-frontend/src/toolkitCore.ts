@@ -681,6 +681,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     sectionList: root.getElementById("trim-section-list") as HTMLElement,
     addSectionButton: root.getElementById("trim-add-section") as HTMLButtonElement,
     totalLabel: root.getElementById("trim-total") as HTMLElement,
+    // Shift-drag moves a handle one frame per pixel
+    fineSecondsPerPixel: () => 1 / (sourceFps || 30),
     onChange: () => updateSizeEstimate(),
   });
 

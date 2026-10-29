@@ -24,6 +24,8 @@ export interface TrimControllerOptions {
   sectionList?: HTMLElement;
   addSectionButton?: HTMLButtonElement;
   totalLabel?: HTMLElement;
+  /** Seconds per pixel while Shift is held during a handle drag (e.g. one video frame). Default 0.01. */
+  fineSecondsPerPixel?: () => number;
   /** Fired when the enable state or the selected range changes. */
   onChange?: () => void;
 }
@@ -210,6 +212,46 @@ export function createTrimController(opts: TrimControllerOptions): TrimControlle
       }),
     ),
   );
+
+  // Handle drags are tracked manually (instead of the native range drag) so
+  // Shift can switch to fine control at any point mid-drag: movement is
+  // accumulated as deltas, normally at the slider's own seconds-per-pixel (the
+  // handle follows the cursor) and with Shift at `fineSecondsPerPixel`.
+  // Only the thumbs take pointer events, so a pointerdown here is a thumb grab.
+  [startInput, endInput].forEach((el) => {
+    let drag: { pointerId: number; lastX: number; value: number } | null = null;
+
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); // suppress the native thumb drag
+      el.focus(); // keep arrow-key nudging available
+      el.setPointerCapture(e.pointerId);
+      drag = { pointerId: e.pointerId, lastX: e.clientX, value: parseFloat(el.value) };
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (!drag || e.pointerId !== drag.pointerId) return;
+      const width = el.getBoundingClientRect().width;
+      if (!width || !duration) return;
+      const perPixel = e.shiftKey ? (opts.fineSecondsPerPixel?.() ?? 0.01) : duration / width;
+      drag.value = Math.max(0, Math.min(duration, drag.value + (e.clientX - drag.lastX) * perPixel));
+      drag.lastX = e.clientX;
+      el.value = String(drag.value);
+      // Reuse the normal input handling (clamping, labels, preview scrub)
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      // Follow any clamping applied by that handler (e.g. start can't pass end)
+      const applied = parseFloat(el.value);
+      if (Math.abs(applied - drag.value) > 0.01) drag.value = applied;
+    });
+
+    const endDrag = (e: PointerEvent) => {
+      if (!drag || e.pointerId !== drag.pointerId) return;
+      drag = null;
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+    el.addEventListener("pointerup", endDrag);
+    el.addEventListener("pointercancel", endDrag);
+  });
 
   // Playback previews the edit: play each section in order, skipping the gaps,
   // then stop back at the first section.
