@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@picocss/pico": "^2.1.1",
+    "heic-to": "^1.6.7",
     "mediabunny": "^1.49.0",
     "upng-js": "^2.1.0"
   },

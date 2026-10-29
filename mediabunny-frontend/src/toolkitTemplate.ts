@@ -72,7 +72,7 @@ export const TOOLKIT_MARKUP = /*html*/ `
         <small style="font-size: 0.8rem; opacity: 0.7"
           >Supports video (MP4, WebM, MOV), images (PNG, JPG, WebP, AVIF), and audio (MP3, WAV, M4A, FLAC, OGG)</small
         >
-        <input type="file" id="video-file-input" accept="video/*,image/*,audio/*" multiple />
+        <input type="file" id="video-file-input" accept="video/*,image/*,audio/*,.heic,.heif" multiple />
       </div>
 
       <!-- Loaded media: 3-column workflow (info | settings | output) -->

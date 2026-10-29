@@ -1,5 +1,5 @@
 import UPNG from "upng-js";
-import { drawResizedHighQuality } from "./shared";
+import { drawResizedHighQuality, decodeImageFile } from "./shared";
 import { createCropEditor } from "./cropEditor";
 
 // Canvas drags in crop mode: move the box, or draw a new one. Corner resizing
@@ -563,7 +563,7 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     imageCopyBase64Status.textContent = "";
     currentImageObjectUrl = URL.createObjectURL(file);
 
-    sourceImageBitmap = await createImageBitmap(file);
+    sourceImageBitmap = await decodeImageFile(file);
     sourceImageWidth = sourceImageBitmap.width;
     sourceImageHeight = sourceImageBitmap.height;
 

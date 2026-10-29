@@ -10,6 +10,27 @@ import {
   type OutputFormat,
 } from "mediabunny";
 
+// --- Image decoding ---
+export function isHeicFile(file: File): boolean {
+  return /^image\/hei[cf]/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+}
+
+/**
+ * Decode an image file to an ImageBitmap. Uses the browser's decoder first;
+ * HEIC/HEIF (which only Safari decodes natively) falls back to libheif via
+ * `heic-to`, loaded on demand so its ~3 MB WASM doesn't weigh down other loads.
+ */
+export async function decodeImageFile(file: File): Promise<ImageBitmap> {
+  try {
+    return await createImageBitmap(file);
+  } catch (err) {
+    if (!isHeicFile(file)) throw err;
+    console.log(`Decoding HEIC image "${file.name}" with libheif…`);
+    const { heicTo } = await import("heic-to");
+    return await heicTo({ blob: file, type: "bitmap" });
+  }
+}
+
 // --- Formatting ---
 export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return "0 Bytes";

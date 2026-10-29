@@ -2,7 +2,7 @@
 // images. Queue, thumbnails, and ZIP "Download all" are handled by the generic
 // batch engine; this module supplies the image-specific settings + processor.
 import { createBatchEngine } from "./batchShared";
-import { drawResizedHighQuality } from "./shared";
+import { drawResizedHighQuality, decodeImageFile, isHeicFile } from "./shared";
 
 type CreateImageBatchOptions = {
   root: Document | ShadowRoot;
@@ -79,9 +79,24 @@ export function createImageBatchWorkflow({ root }: CreateImageBatchOptions) {
     },
     zipName: "media-converter-images.zip",
     processButtonLabel: (n) => `🖼️ Process All Images (${n})`,
-    makeThumb: async (file) => URL.createObjectURL(file),
+    makeThumb: async (file) => {
+      if (!isHeicFile(file)) return URL.createObjectURL(file);
+      // <img> can't show HEIC outside Safari, so render a small decoded thumbnail
+      const bitmap = await decodeImageFile(file);
+      const scale = Math.min(1, 320 / Math.max(bitmap.width, bitmap.height));
+      const canvas = drawResizedHighQuality(
+        bitmap,
+        bitmap.width,
+        bitmap.height,
+        Math.max(1, Math.round(bitmap.width * scale)),
+        Math.max(1, Math.round(bitmap.height * scale)),
+      );
+      bitmap.close();
+      const blob = await canvasToBlob(canvas, "image/jpeg", 0.85);
+      return URL.createObjectURL(blob);
+    },
     process: async (file) => {
-      const bitmap = await createImageBitmap(file);
+      const bitmap = await decodeImageFile(file);
       try {
         const { w, h } = computeOutputSize(bitmap.width, bitmap.height);
         const canvas = drawResizedHighQuality(bitmap, bitmap.width, bitmap.height, w, h);

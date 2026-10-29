@@ -455,7 +455,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     if (file.type.startsWith("audio/")) return "audio";
     const lower = file.name.toLowerCase();
     if ([".mp4", ".mov", ".webm", ".mkv", ".avi"].some((ext) => lower.endsWith(ext))) return "video";
-    if ([".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".gif"].some((ext) => lower.endsWith(ext))) return "image";
+    if ([".jpg", ".jpeg", ".png", ".webp", ".avif", ".bmp", ".gif", ".heic", ".heif"].some((ext) => lower.endsWith(ext)))
+      return "image";
     if ([".mp3", ".wav", ".m4a", ".flac", ".ogg", ".opus", ".aac", ".weba"].some((ext) => lower.endsWith(ext)))
       return "audio";
     return null;
