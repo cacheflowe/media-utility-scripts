@@ -1,7 +1,10 @@
 import UPNG from "upng-js";
 import { drawResizedHighQuality } from "./shared";
+import { createCropEditor } from "./cropEditor";
 
-type CropDragHandle = "move" | "nw" | "ne" | "sw" | "se" | "new";
+// Canvas drags in crop mode: move the box, or draw a new one. Corner resizing
+// is handled by the shared crop editor overlay.
+type CropDragHandle = "move" | "new";
 
 type PreviewTransform = {
   scale: number;
@@ -18,7 +21,6 @@ type CreateImageWorkflowOptions = {
   revealLoadedSection: () => void;
 };
 
-const CROP_HANDLE_RADIUS = 12;
 const CROP_MIN_SIZE = 8;
 const BLUR_RADIUS_MIN = 1;
 const BLUR_RADIUS_DEFAULT = 4;
@@ -126,6 +128,20 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     startCrop: { x: number; y: number; width: number; height: number };
   } | null = null;
 
+  // Corner handles, move grip and 100% loupe (shared with the video workspace)
+  const cropEditor = createCropEditor({
+    container: imageCanvasStage,
+    getSourceSize: () => ({ width: sourceImageWidth, height: sourceImageHeight }),
+    getCrop: () => getNormalizedCrop(),
+    setCrop: (c) => {
+      clampCropAndSync(c);
+      syncImageOutputFromCrop();
+      cropEditor.render();
+    },
+    getLoupeSource: () => sourceImageBitmap,
+    minSize: CROP_MIN_SIZE,
+  });
+
   function revokeImageUrls() {
     if (currentImageObjectUrl) {
       URL.revokeObjectURL(currentImageObjectUrl);
@@ -202,19 +218,6 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
 
   function getCropHandleAtPoint(stageX: number, stageY: number): CropDragHandle | null {
     const crop = getPreviewCropRect();
-    const handles: Array<[CropDragHandle, number, number]> = [
-      ["nw", crop.x, crop.y],
-      ["ne", crop.x + crop.width, crop.y],
-      ["sw", crop.x, crop.y + crop.height],
-      ["se", crop.x + crop.width, crop.y + crop.height],
-    ];
-
-    for (const [handle, hx, hy] of handles) {
-      if (Math.hypot(stageX - hx, stageY - hy) <= CROP_HANDLE_RADIUS) {
-        return handle;
-      }
-    }
-
     if (stageX >= crop.x && stageX <= crop.x + crop.width && stageY >= crop.y && stageY <= crop.y + crop.height) {
       return "move";
     }
@@ -245,7 +248,9 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     const drawWidth = containerWidth;
     const drawHeight = Math.max(1, Math.floor(sourceImageHeight * scale));
 
-    // Keep stage tightly fitted to the rendered image to avoid letterboxing.
+    // Keep stage tightly fitted to the rendered image to avoid letterboxing
+    // (the crop overlay maps its percentages onto the stage).
+    imageCanvasStage.style.minHeight = "0";
     imageCanvasStage.style.height = `${drawHeight}px`;
 
     previewTransform = { scale, offsetX: 0, offsetY: 0, drawWidth, drawHeight };
@@ -261,32 +266,8 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     pctx.clearRect(0, 0, drawWidth, drawHeight);
     pctx.drawImage(sourceImageBitmap, 0, 0, drawWidth, drawHeight);
 
-    // Only draw the crop marquee when cropping is enabled
-    if (imgEnableCrop.checked) {
-      const crop = getNormalizedCrop();
-      const cropX = crop.x * scale;
-      const cropY = crop.y * scale;
-      const cropW = crop.width * scale;
-      const cropH = crop.height * scale;
-
-      pctx.save();
-      pctx.strokeStyle = "rgba(255, 107, 129, 0.95)";
-      pctx.lineWidth = 2;
-      pctx.setLineDash([8, 5]);
-      pctx.strokeRect(cropX, cropY, cropW, cropH);
-      pctx.setLineDash([]);
-      pctx.fillStyle = "rgba(255, 107, 129, 0.95)";
-      const handleSize = 10;
-      [
-        [cropX, cropY],
-        [cropX + cropW, cropY],
-        [cropX, cropY + cropH],
-        [cropX + cropW, cropY + cropH],
-      ].forEach(([x, y]) => {
-        pctx.fillRect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-      });
-      pctx.restore();
-    }
+    // The crop box is a DOM overlay (shared crop editor), shown when cropping is enabled
+    cropEditor.setVisible(imgEnableCrop.checked);
 
     renderMaskPreview();
   }
@@ -355,6 +336,8 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
     const tool = getCanvasTool();
     imageCanvasStage.classList.toggle("is-crop-mode", tool === "crop");
     imageCanvasStage.classList.toggle("is-paint-mode", tool === "paint");
+    // Crop handles only respond while the crop tool is active
+    cropEditor.setInteractive(tool === "crop");
   }
 
   // A tool radio is only selectable when its corresponding feature is enabled.
@@ -442,43 +425,17 @@ export function createImageWorkflow({ root, formatBytes, revealLoadedSection }: 
       return;
     }
 
-    if (handle === "new") {
-      const x1 = Math.min(startPoint.x, sourcePoint.x);
-      const y1 = Math.min(startPoint.y, sourcePoint.y);
-      const x2 = Math.max(startPoint.x, sourcePoint.x);
-      const y2 = Math.max(startPoint.y, sourcePoint.y);
-      clampCropAndSync({
-        x: x1,
-        y: y1,
-        width: Math.max(CROP_MIN_SIZE, x2 - x1),
-        height: Math.max(CROP_MIN_SIZE, y2 - y1),
-      });
-      return;
-    }
-
-    let x = startCrop.x;
-    let y = startCrop.y;
-    let width = startCrop.width;
-    let height = startCrop.height;
-    const right = startCrop.x + startCrop.width;
-    const bottom = startCrop.y + startCrop.height;
-
-    if (handle === "nw" || handle === "sw") {
-      x = Math.min(sourcePoint.x, right - CROP_MIN_SIZE);
-      width = right - x;
-    }
-    if (handle === "ne" || handle === "se") {
-      width = Math.max(CROP_MIN_SIZE, sourcePoint.x - startCrop.x);
-    }
-    if (handle === "nw" || handle === "ne") {
-      y = Math.min(sourcePoint.y, bottom - CROP_MIN_SIZE);
-      height = bottom - y;
-    }
-    if (handle === "sw" || handle === "se") {
-      height = Math.max(CROP_MIN_SIZE, sourcePoint.y - startCrop.y);
-    }
-
-    clampCropAndSync({ x, y, width, height });
+    // "new": draw a fresh box from the drag start to the pointer
+    const x1 = Math.min(startPoint.x, sourcePoint.x);
+    const y1 = Math.min(startPoint.y, sourcePoint.y);
+    const x2 = Math.max(startPoint.x, sourcePoint.x);
+    const y2 = Math.max(startPoint.y, sourcePoint.y);
+    clampCropAndSync({
+      x: x1,
+      y: y1,
+      width: Math.max(CROP_MIN_SIZE, x2 - x1),
+      height: Math.max(CROP_MIN_SIZE, y2 - y1),
+    });
   }
 
   function mapImageMimeToExt(mime: string) {

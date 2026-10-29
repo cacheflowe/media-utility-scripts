@@ -89,14 +89,7 @@ export const TOOLKIT_MARKUP = /*html*/ `
               </header>
               <div class="video-container">
                 <video id="preview-video" controls muted playsinline></video>
-                <div id="video-crop-overlay" class="crop-overlay" style="display: none">
-                  <div class="crop-box" id="video-crop-box">
-                    <span class="crop-handle" data-handle="nw"></span>
-                    <span class="crop-handle" data-handle="ne"></span>
-                    <span class="crop-handle" data-handle="sw"></span>
-                    <span class="crop-handle" data-handle="se"></span>
-                  </div>
-                </div>
+                <!-- crop overlay is injected by src/cropEditor.ts -->
               </div>
               <small style="display: block; text-align: center; margin-top: 0.5rem; color: var(--pico-muted-color)">
                 💡 Use player's controls or sliders to scrub frames for cutouts
@@ -490,8 +483,57 @@ None detected</pre
                 </details>
 
                 <details class="config-card" id="panel-resample">
-                  <summary class="card-header">⏱️ Frame Rate Resample</summary>
+                  <summary class="card-header">⏩ Speed & Frame Rate</summary>
                   <div class="config-card-body">
+                    <label for="enable-speed">
+                      <input type="checkbox" id="enable-speed" name="enable-speed" />
+                      ⏩ Change Speed / Time-lapse
+                    </label>
+                    <div id="speed-controls-group" style="display: none; margin: 0.6rem 0 1rem">
+                      <div class="grid" style="align-items: end; margin-bottom: 0">
+                        <div>
+                          <label for="speed-factor" style="font-size: 0.8rem">Speed:</label>
+                          <select id="speed-factor" name="speed-factor" style="margin-bottom: 0">
+                            <option value="0.5">0.5× (slow motion)</option>
+                            <option value="2">2×</option>
+                            <option value="4" selected>4×</option>
+                            <option value="8">8×</option>
+                            <option value="16">16×</option>
+                            <option value="32">32×</option>
+                            <option value="64">64×</option>
+                            <option value="custom">Custom…</option>
+                          </select>
+                        </div>
+                        <div id="speed-custom-wrap" style="display: none">
+                          <label for="speed-custom" style="font-size: 0.8rem">Custom speed (×):</label>
+                          <input type="number" id="speed-custom" min="0.1" max="1000" step="0.1" value="10" style="margin-bottom: 0" />
+                        </div>
+                        <div>
+                          <label for="speed-frames" style="font-size: 0.8rem">Frames:</label>
+                          <select id="speed-frames" name="speed-frames" style="margin-bottom: 0">
+                            <option value="skip" selected>Skip (sharp)</option>
+                            <option value="blend">Blend (motion blur)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label for="speed-audio" style="font-size: 0.8rem">Audio:</label>
+                          <select id="speed-audio" name="speed-audio" style="margin-bottom: 0">
+                            <option value="stretch" selected>Keep pitch</option>
+                            <option value="pitch">Pitch follows speed</option>
+                            <option value="remove">Remove</option>
+                          </select>
+                        </div>
+                      </div>
+                      <small style="display: block; color: var(--pico-muted-color); margin-top: 0.5rem; font-size: 0.8rem">
+                        Output length: <span class="time-val" id="speed-output-length">-</span><br />
+                        <strong>Keep pitch</strong> time-stretches the audio so voices and music stay in tune;
+                        <strong>Pitch follows speed</strong> plays it faster like a tape. The audio panel's Mute still
+                        wins, and audio is re-encoded. The output frame rate is the source rate, or the target below
+                        when resampling is on. <strong>Blend</strong> averages all the source frames that land in
+                        each output frame.
+                      </small>
+                    </div>
+
                     <label for="enable-fps">
                       <input type="checkbox" id="enable-fps" name="enable-fps" />
                       ⏱️ Resample / Normalize Frame Rate (FPS)
@@ -509,7 +551,7 @@ None detected</pre
                             <option value="60">60 FPS (Ultra smooth / gaming standard)</option>
                           </select>
                         </div>
-                        <div>
+                        <div id="fps-mode-wrap">
                           <label for="fps-mode" style="font-size: 0.8rem">Resampling Mode:</label>
                           <select id="fps-mode" name="fps-mode" style="margin-bottom: 0">
                             <option value="duplicate" selected>Frame Repeating (Fast / Standard)</option>

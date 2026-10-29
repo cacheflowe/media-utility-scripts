@@ -20,6 +20,9 @@ import { createAudioWorkflow } from "./audioWorkflow";
 import { createImageBatchWorkflow } from "./imageBatchWorkflow";
 import { createVideoBatchWorkflow } from "./videoBatchWorkflow";
 import { createTrimController } from "./trimController";
+import { createCropEditor } from "./cropEditor";
+import { createTimelapseProcess, type TimelapseFrameMode } from "./timelapse";
+import { createAudioSpeedProcess, type AudioSpeedMode } from "./audioStretch";
 import {
   formatBytes,
   formatDuration,
@@ -197,8 +200,6 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   const cropH = root.getElementById("crop-h") as HTMLInputElement;
   const cropFullBtn = root.getElementById("crop-full") as HTMLButtonElement;
   const cropSquareBtn = root.getElementById("crop-square") as HTMLButtonElement;
-  const videoCropOverlay = root.getElementById("video-crop-overlay") as HTMLElement;
-  const videoCropBox = root.getElementById("video-crop-box") as HTMLElement;
   const audioTranscodeOption = root.querySelector('label[for="audio-mode-transcode"]') as HTMLElement | null;
   const rotateCorrection = root.getElementById("rotate-correction") as HTMLSelectElement;
   const allowRotMetadata = root.getElementById("allow-rot-metadata") as HTMLInputElement;
@@ -208,6 +209,17 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   const fpsControlsGroup = root.getElementById("fps-controls-group") as HTMLDivElement;
   const targetFps = root.getElementById("target-fps") as HTMLSelectElement;
   const fpsMode = root.getElementById("fps-mode") as HTMLSelectElement;
+  const fpsModeWrap = root.getElementById("fps-mode-wrap") as HTMLElement;
+
+  // Speed change / time-lapse
+  const enableSpeed = root.getElementById("enable-speed") as HTMLInputElement;
+  const speedControlsGroup = root.getElementById("speed-controls-group") as HTMLDivElement;
+  const speedFactor = root.getElementById("speed-factor") as HTMLSelectElement;
+  const speedCustomWrap = root.getElementById("speed-custom-wrap") as HTMLElement;
+  const speedCustom = root.getElementById("speed-custom") as HTMLInputElement;
+  const speedFrames = root.getElementById("speed-frames") as HTMLSelectElement;
+  const speedAudio = root.getElementById("speed-audio") as HTMLSelectElement;
+  const speedOutputLength = root.getElementById("speed-output-length") as HTMLElement;
 
   // Custom Bitrate Elements
   const useCustomBitrate = root.getElementById("use-custom-bitrate") as HTMLInputElement;
@@ -701,6 +713,33 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     fpsControlsGroup.style.display = enableFps.checked ? "block" : "none";
   });
 
+  // --- Speed / Time-lapse ---
+  /** The active speed factor, or null when speed change is off (or 1×). */
+  function getSpeed(): number | null {
+    if (!enableSpeed.checked) return null;
+    const v = speedFactor.value === "custom" ? parseFloat(speedCustom.value) : parseFloat(speedFactor.value);
+    return v > 0 && v !== 1 ? v : null;
+  }
+
+  /** Output frame rate for a speed change: the resample target if on, else the source rate. */
+  function speedOutputFps() {
+    if (enableFps.checked) {
+      const tf = parseInt(targetFps.value);
+      if (tf > 0) return tf;
+    }
+    return Math.min(60, Math.round(sourceFps) || 30);
+  }
+
+  function updateSpeedUI() {
+    speedControlsGroup.style.display = enableSpeed.checked ? "block" : "none";
+    speedCustomWrap.style.display = speedFactor.value === "custom" ? "" : "none";
+    // The time-lapse does its own resampling, so the FPS resampling mode doesn't apply
+    fpsModeWrap.style.display = getSpeed() ? "none" : "";
+  }
+  [enableSpeed, speedFactor, speedCustom].forEach((el) =>
+    el.addEventListener(el === speedCustom ? "input" : "change", updateSpeedUI),
+  );
+
   // --- Sizing Aspect Ratio Computations ---
   enableResize.addEventListener("change", () => {
     resizeControlsGroup.style.display = enableResize.checked ? "block" : "none";
@@ -801,7 +840,6 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   // before resizing (ConversionVideoOptions.crop).
   const CROP_MIN = 8;
   let videoCrop = { x: 0, y: 0, width: 0, height: 0 };
-  let cropDrag: { handle: string; startX: number; startY: number; start: typeof videoCrop } | null = null;
 
   // Many video encoders reject or mangle odd frame dimensions, so crop sizes
   // are floored to even numbers (flooring keeps them inside the frame).
@@ -817,13 +855,15 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     return { x, y, width, height };
   }
 
-  function renderCropOverlay() {
-    if (!sourceVideoWidth || !sourceVideoHeight) return;
-    videoCropBox.style.left = `${(videoCrop.x / sourceVideoWidth) * 100}%`;
-    videoCropBox.style.top = `${(videoCrop.y / sourceVideoHeight) * 100}%`;
-    videoCropBox.style.width = `${(videoCrop.width / sourceVideoWidth) * 100}%`;
-    videoCropBox.style.height = `${(videoCrop.height / sourceVideoHeight) * 100}%`;
-  }
+  // Drag-to-crop box over the preview (shared with the image workspace)
+  const videoCropEditor = createCropEditor({
+    container: previewVideo.parentElement as HTMLElement,
+    getSourceSize: () => ({ width: sourceVideoWidth, height: sourceVideoHeight }),
+    getCrop: () => videoCrop,
+    setCrop: (c) => setVideoCrop(c),
+    getLoupeSource: () => (previewVideo.videoWidth ? previewVideo : null),
+    minSize: CROP_MIN,
+  });
 
   function setVideoCrop(c: { x: number; y: number; width: number; height: number }) {
     videoCrop = clampVideoCrop(c);
@@ -831,7 +871,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     cropY.value = String(videoCrop.y);
     cropW.value = String(videoCrop.width);
     cropH.value = String(videoCrop.height);
-    renderCropOverlay();
+    videoCropEditor.render();
     syncResizeToBase();
     updateSizeEstimate();
   }
@@ -843,9 +883,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   enableCropVideo.addEventListener("change", () => {
     const on = enableCropVideo.checked;
     cropControlsGroup.style.display = on ? "block" : "none";
-    videoCropOverlay.style.display = on ? "block" : "none";
     if (on && (!videoCrop.width || !videoCrop.height)) resetVideoCropToFull();
-    renderCropOverlay();
+    videoCropEditor.setVisible(on);
     syncResizeToBase();
     updateSizeEstimate();
   });
@@ -872,60 +911,6 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     });
   });
 
-  videoCropBox.addEventListener("pointerdown", (e) => {
-    if (!sourceVideoWidth) return;
-    const handle = (e.target as HTMLElement).dataset?.handle || "move";
-    cropDrag = { handle, startX: e.clientX, startY: e.clientY, start: { ...videoCrop } };
-    e.preventDefault();
-    e.stopPropagation();
-  });
-
-  window.addEventListener("pointermove", (e) => {
-    if (!cropDrag) return;
-    const rect = previewVideo.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    // Convert pointer delta from display pixels to native source pixels
-    const dx = ((e.clientX - cropDrag.startX) / rect.width) * sourceVideoWidth;
-    const dy = ((e.clientY - cropDrag.startY) / rect.height) * sourceVideoHeight;
-    const s = cropDrag.start;
-
-    if (cropDrag.handle === "move") {
-      setVideoCrop({
-        x: Math.max(0, Math.min(s.x + dx, sourceVideoWidth - s.width)),
-        y: Math.max(0, Math.min(s.y + dy, sourceVideoHeight - s.height)),
-        width: s.width,
-        height: s.height,
-      });
-      return;
-    }
-
-    let x = s.x;
-    let y = s.y;
-    let width = s.width;
-    let height = s.height;
-    const right = s.x + s.width;
-    const bottom = s.y + s.height;
-    const h = cropDrag.handle;
-    if (h === "nw" || h === "sw") {
-      x = Math.min(s.x + dx, right - CROP_MIN);
-      width = right - x;
-    }
-    if (h === "ne" || h === "se") {
-      width = Math.max(CROP_MIN, s.width + dx);
-    }
-    if (h === "nw" || h === "ne") {
-      y = Math.min(s.y + dy, bottom - CROP_MIN);
-      height = bottom - y;
-    }
-    if (h === "sw" || h === "se") {
-      height = Math.max(CROP_MIN, s.height + dy);
-    }
-    setVideoCrop({ x, y, width, height });
-  });
-
-  window.addEventListener("pointerup", () => {
-    cropDrag = null;
-  });
 
   // --- Output Format Codec Alignment ---
   outFormat.addEventListener("change", () => {
@@ -985,6 +970,12 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
       const tf = parseInt(targetFps.value);
       if (tf > 0) fps = tf;
     }
+    const speed = getSpeed();
+    if (speed) {
+      duration /= speed;
+      fps = speedOutputFps();
+    }
+    speedOutputLength.textContent = formatDuration(duration) + (speed ? ` at ${speed}×` : "");
 
     // Video bitrate (bps)
     let videoBps: number;
@@ -1132,8 +1123,16 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
           console.log(`Setting resize dimensions: ${videoConfig.width}x${videoConfig.height} (${videoConfig.fit})`);
         }
 
-        // Handle custom target frame rate and resampling mode
-        if (enableFps.checked) {
+        // Speed change / time-lapse retimes and resamples frames itself, so it
+        // replaces the frame-rate resampling modes below.
+        const speed = getSpeed();
+        if (speed) {
+          const outFps = speedOutputFps();
+          const frames = speedFrames.value as TimelapseFrameMode;
+          videoConfig.process = createTimelapseProcess(speed, outFps, frames);
+          console.log(`Time-lapse: ${speed}× speed at ${outFps} FPS (${frames} frames).`);
+        } else if (enableFps.checked) {
+          // Handle custom target frame rate and resampling mode
           const fpsVal = parseInt(targetFps.value);
           if (!isNaN(fpsVal) && fpsVal > 0) {
             const mode = fpsMode.value;
@@ -1253,6 +1252,9 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
       if (audioModeMute.checked) {
         console.log("🔇 Mutex setting: Stripping entire audio stream from output.");
         audioConfig.discard = true;
+      } else if (!wantsFastCopy && getSpeed() && speedAudio.value === "remove") {
+        console.log("🔇 Speed change is on with audio set to Remove: dropping the audio track.");
+        audioConfig.discard = true;
       } else if (audioModeCopy.checked) {
         console.log("⚡ Audio block: Direct pass-through copy selected.");
         audioConfig.forceTranscode = false;
@@ -1325,6 +1327,25 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
           };
           if (audioModeCopy.checked) console.log("Audio will be re-encoded to join sections.");
         }
+      }
+
+      // Speed change: retime the audio to match the video (after any section
+      // joining), either time-stretched (pitch kept) or resampled (pitch shifts).
+      const audioSpeed = wantsFastCopy ? null : getSpeed();
+      if (audioSpeed && !audioConfig.discard) {
+        const mode = speedAudio.value as AudioSpeedMode;
+        const speedProcess = createAudioSpeedProcess(audioSpeed, mode);
+        const sectionProcess = audioConfig.process;
+        audioConfig.process = async (sample) => {
+          if (!sectionProcess) return speedProcess(sample);
+          // The section filter hands back a clone we own (or null for a gap)
+          const kept = await sectionProcess(sample);
+          if (!kept || Array.isArray(kept)) return null;
+          const out = speedProcess(kept);
+          kept.close();
+          return out;
+        };
+        console.log(`Audio ${mode === "stretch" ? "time-stretched (pitch kept)" : "resampled (pitch shifts)"} to ${audioSpeed}× speed.`);
       }
 
       // Initialize the Conversion engine thread

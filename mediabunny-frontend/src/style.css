@@ -58,12 +58,15 @@ body {
   display: block;
 }
 
-/* Interactive spatial-crop overlay on the video preview */
+/* Interactive crop overlay (src/cropEditor.ts), shared by the video and image
+   previews. Only the corner handles and the center move grip take pointer
+   input, so the media underneath (e.g. video controls) keeps working. */
 .crop-overlay {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  pointer-events: none; /* let the video's own controls work; the box opts in */
+  z-index: 2;
+  pointer-events: none;
 }
 
 .crop-box {
@@ -71,15 +74,13 @@ body {
   box-sizing: border-box;
   border: 2px solid var(--primary-color, #ff6b81);
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45); /* dims everything outside the box */
-  cursor: move;
-  pointer-events: auto;
-  touch-action: none;
+  pointer-events: none;
 }
 
-.crop-handle {
+.crop-handle,
+.crop-move {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  box-sizing: border-box;
   background: var(--primary-color, #ff6b81);
   border: 2px solid #fff;
   border-radius: 50%;
@@ -87,24 +88,85 @@ body {
   touch-action: none;
 }
 
+.crop-handle {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+/* Invisible, larger hit area around each grip for easier grabbing */
+.crop-handle::before,
+.crop-move::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+.crop-move {
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  background: rgba(0, 0, 0, 0.35);
+  cursor: move;
+}
+
+.crop-overlay.is-passive .crop-handle,
+.crop-overlay.is-passive .crop-move {
+  display: none;
+}
+
+/* 100% loupe shown while dragging a crop corner */
+.crop-loupe {
+  position: fixed;
+  z-index: 1000;
+  width: 168px;
+  pointer-events: none;
+  border: 2px solid var(--primary-color, #ff6b81);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #111;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.crop-overlay .crop-loupe canvas {
+  position: static; /* beat `.image-canvas-stage canvas` */
+  display: block;
+  width: 168px;
+  height: 168px;
+}
+
+.crop-loupe-label {
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.75);
+  white-space: pre;
+  line-height: 1.35;
+}
+
+/* Handles sit just inside the box corners so they stay grabbable when the crop
+   touches the frame edge (the overlay clips anything outside the media). */
 .crop-handle[data-handle="nw"] {
-  left: -8px;
-  top: -8px;
+  left: -2px;
+  top: -2px;
   cursor: nwse-resize;
 }
 .crop-handle[data-handle="ne"] {
-  right: -8px;
-  top: -8px;
+  right: -2px;
+  top: -2px;
   cursor: nesw-resize;
 }
 .crop-handle[data-handle="sw"] {
-  left: -8px;
-  bottom: -8px;
+  left: -2px;
+  bottom: -2px;
   cursor: nesw-resize;
 }
 .crop-handle[data-handle="se"] {
-  right: -8px;
-  bottom: -8px;
+  right: -2px;
+  bottom: -2px;
   cursor: nwse-resize;
 }
 
