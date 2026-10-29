@@ -182,6 +182,76 @@ body {
   transition: all 0.1s ease;
 }
 
+/* Non-active trim sections (multi-section time crop) */
+.trim-ghost {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background-color: rgba(255, 107, 129, 0.18);
+  border-left: 1px solid rgba(255, 107, 129, 0.6);
+  border-right: 1px solid rgba(255, 107, 129, 0.6);
+}
+
+.trim-sections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.trim-section-list {
+  /* Capture the page text color here; Pico redefines --pico-color on buttons */
+  --trim-row-color: var(--pico-color);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.trim-section-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+  list-style: none;
+}
+
+.trim-section-row button {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--pico-muted-border-color);
+  background: transparent;
+  color: var(--trim-row-color);
+}
+
+.trim-section-pick {
+  flex: 1;
+  text-align: left;
+  font-family: monospace;
+}
+
+.trim-section-row.active .trim-section-pick {
+  border-color: var(--pico-primary-background);
+  background: rgba(255, 107, 129, 0.15);
+}
+
+.trim-section-remove:disabled {
+  opacity: 0.35;
+}
+
+#trim-add-section {
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.trim-sections-help {
+  display: block;
+  color: var(--pico-muted-color);
+  font-size: 0.75rem;
+}
+
 /* Configuration Card Formatting.
    `header.card-header` bleeds to the edges of a 1rem-padded card (.info-card /
    .result-card); the collapsible <details> panels use `summary.card-header`

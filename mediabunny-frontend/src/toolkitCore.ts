@@ -2,6 +2,7 @@ import {
   Input,
   ALL_FORMATS,
   BlobSource,
+  VideoSampleSink,
   Output,
   Mp4OutputFormat,
   WebMOutputFormat,
@@ -248,6 +249,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   let currentSourceInput: Input | null = null;
   let sourceVideoWidth: number = 0;
   let sourceVideoHeight: number = 0;
+  // True when the container's declared frame size disagrees with the decoded frames
+  let sourceSizeMismatch = false;
   let sourceVideoDuration: number = 0;
   let sourceFps: number = 0;
   let sourceHasAudio: boolean = false;
@@ -541,10 +544,37 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
         const codedHeight = await primaryVideo.getCodedHeight();
         const rotation = await primaryVideo.getRotation();
 
+        // Some files (e.g. screen captures made under display scaling) declare a
+        // container size that differs from the encoded stream. Mediabunny crops
+        // the decoded frames, so the crop editor must use the decoded size.
+        const metadataWidth = sourceVideoWidth;
+        const metadataHeight = sourceVideoHeight;
+        sourceSizeMismatch = false;
+        try {
+          const firstSample = await new VideoSampleSink(primaryVideo).getSample(
+            await primaryVideo.getFirstTimestamp(),
+          );
+          if (firstSample) {
+            if (firstSample.displayWidth !== metadataWidth || firstSample.displayHeight !== metadataHeight) {
+              sourceVideoWidth = firstSample.displayWidth;
+              sourceVideoHeight = firstSample.displayHeight;
+              sourceSizeMismatch = true;
+              console.warn(
+                `Container declares ${metadataWidth}x${metadataHeight} but frames decode at ${sourceVideoWidth}x${sourceVideoHeight}. Using the decoded size.`,
+              );
+            }
+            firstSample.close();
+          }
+        } catch (err) {
+          console.warn("Could not decode a frame to verify video dimensions:", err);
+        }
+
         sourceVideoDuration = await currentSourceInput.computeDuration();
 
         metaDuration.textContent = formatDuration(sourceVideoDuration);
-        metaResolution.textContent = `${sourceVideoWidth}x${sourceVideoHeight}`;
+        metaResolution.textContent = sourceSizeMismatch
+          ? `${sourceVideoWidth}x${sourceVideoHeight} (container says ${metadataWidth}x${metadataHeight})`
+          : `${sourceVideoWidth}x${sourceVideoHeight}`;
         metaAspect.textContent = `${(sourceVideoWidth / sourceVideoHeight).toFixed(2)}:1`;
         metaVcodec.textContent = String(codec).toUpperCase();
 
@@ -574,6 +604,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
         // Initialize resizer defaults
         resizeWidth.value = String(sourceVideoWidth);
         resizeHeight.value = String(sourceVideoHeight);
+        lastResizeBase = { w: sourceVideoWidth, h: sourceVideoHeight };
         resizeWidth.max = String(sourceVideoWidth * 2);
         resizeHeight.max = String(sourceVideoHeight * 2);
 
@@ -634,6 +665,9 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     startLabel: trimStartVal,
     endLabel: trimEndVal,
     selectionBar: trimSelectionBar,
+    sectionList: root.getElementById("trim-section-list") as HTMLElement,
+    addSectionButton: root.getElementById("trim-add-section") as HTMLButtonElement,
+    totalLabel: root.getElementById("trim-total") as HTMLElement,
     onChange: () => updateSizeEstimate(),
   });
 
@@ -672,16 +706,44 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     resizeControlsGroup.style.display = enableResize.checked ? "block" : "none";
   });
 
+  // Resize operates on the cropped frame (Mediabunny crops before resizing), so
+  // aspect math and defaults follow the crop region when crop is enabled.
+  function resizeBaseSize() {
+    if (enableCropVideo.checked && videoCrop.width && videoCrop.height) {
+      return { w: videoCrop.width, h: videoCrop.height };
+    }
+    return { w: sourceVideoWidth, h: sourceVideoHeight };
+  }
+
+  // Encoders want even dimensions (Mediabunny also rounds resize sizes up to even)
+  const roundEven = (n: number) => Math.max(2, Math.round(n / 2) * 2);
+
   function calculateAspectHeight(widthVal: number) {
-    if (!sourceVideoWidth || !sourceVideoHeight) return widthVal;
-    const ratio = sourceVideoWidth / sourceVideoHeight;
-    return Math.round(widthVal / ratio);
+    const { w, h } = resizeBaseSize();
+    if (!w || !h) return widthVal;
+    return roundEven(widthVal / (w / h));
   }
 
   function calculateAspectWidth(heightVal: number) {
-    if (!sourceVideoWidth || !sourceVideoHeight) return heightVal;
-    const ratio = sourceVideoWidth / sourceVideoHeight;
-    return Math.round(heightVal * ratio);
+    const { w, h } = resizeBaseSize();
+    if (!w || !h) return heightVal;
+    return roundEven(heightVal * (w / h));
+  }
+
+  // Keep resize inputs in step with the crop: untouched defaults track the crop
+  // size; a custom width keeps its value and re-derives height if aspect-locked.
+  let lastResizeBase = { w: 0, h: 0 };
+  function syncResizeToBase() {
+    const base = resizeBaseSize();
+    const rw = parseInt(resizeWidth.value);
+    const rh = parseInt(resizeHeight.value);
+    if (!rw || !rh || (rw === lastResizeBase.w && rh === lastResizeBase.h)) {
+      resizeWidth.value = String(base.w);
+      resizeHeight.value = String(base.h);
+    } else if (preserveAspect.checked) {
+      resizeHeight.value = String(calculateAspectHeight(rw));
+    }
+    lastResizeBase = base;
   }
 
   resizeWidth.addEventListener("input", () => {
@@ -741,13 +803,17 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
   let videoCrop = { x: 0, y: 0, width: 0, height: 0 };
   let cropDrag: { handle: string; startX: number; startY: number; start: typeof videoCrop } | null = null;
 
+  // Many video encoders reject or mangle odd frame dimensions, so crop sizes
+  // are floored to even numbers (flooring keeps them inside the frame).
+  const floorEven = (n: number) => Math.floor(n / 2) * 2;
+
   function clampVideoCrop(c: { x: number; y: number; width: number; height: number }) {
     const W = sourceVideoWidth;
     const H = sourceVideoHeight;
     const x = Math.max(0, Math.min(Math.round(c.x), Math.max(0, W - CROP_MIN)));
     const y = Math.max(0, Math.min(Math.round(c.y), Math.max(0, H - CROP_MIN)));
-    const width = Math.max(CROP_MIN, Math.min(Math.round(c.width), W - x));
-    const height = Math.max(CROP_MIN, Math.min(Math.round(c.height), H - y));
+    const width = floorEven(Math.max(CROP_MIN, Math.min(Math.round(c.width), W - x)));
+    const height = floorEven(Math.max(CROP_MIN, Math.min(Math.round(c.height), H - y)));
     return { x, y, width, height };
   }
 
@@ -766,6 +832,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     cropW.value = String(videoCrop.width);
     cropH.value = String(videoCrop.height);
     renderCropOverlay();
+    syncResizeToBase();
     updateSizeEstimate();
   }
 
@@ -779,6 +846,7 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
     videoCropOverlay.style.display = on ? "block" : "none";
     if (on && (!videoCrop.width || !videoCrop.height)) resetVideoCropToFull();
     renderCropOverlay();
+    syncResizeToBase();
     updateSizeEstimate();
   });
 
@@ -895,11 +963,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
 
     // Duration (trim-aware)
     let duration = sourceVideoDuration;
-    if (enableTrim.checked) {
-      const s = parseFloat(trimStart.value);
-      const e = parseFloat(trimEnd.value);
-      if (!isNaN(s) && !isNaN(e) && e > s) duration = e - s;
-    }
+    const ranges = videoTrim.getRanges();
+    if (ranges) duration = ranges.reduce((sum, r) => sum + (r.end - r.start), 0);
 
     // Effective dimensions: crop sets the frame size, resize (if on) overrides
     // the final output size; frame rate handled below.
@@ -1043,11 +1108,26 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
           console.log(
             `Cropping frame to ${videoCrop.width}x${videoCrop.height} at (${videoCrop.x}, ${videoCrop.y}).`,
           );
+        } else if (
+          !enableResize.checked &&
+          (sourceSizeMismatch || sourceVideoWidth % 2 || sourceVideoHeight % 2)
+        ) {
+          // An explicit full-frame crop pins the output to the real decoded size
+          // (not a mismatched container size) and trims an odd last row/column.
+          videoConfig.crop = {
+            left: 0,
+            top: 0,
+            width: floorEven(sourceVideoWidth),
+            height: floorEven(sourceVideoHeight),
+          };
+          console.log(
+            `Pinning output to ${videoConfig.crop.width}x${videoConfig.crop.height} (decoded ${sourceVideoWidth}x${sourceVideoHeight}).`,
+          );
         }
 
         if (enableResize.checked) {
-          if (resizeWidth.value) videoConfig.width = parseInt(resizeWidth.value);
-          if (resizeHeight.value) videoConfig.height = parseInt(resizeHeight.value);
+          if (resizeWidth.value) videoConfig.width = roundEven(parseInt(resizeWidth.value));
+          if (resizeHeight.value) videoConfig.height = roundEven(parseInt(resizeHeight.value));
           videoConfig.fit = resizeFit.value as "fill" | "contain" | "cover";
           console.log(`Setting resize dimensions: ${videoConfig.width}x${videoConfig.height} (${videoConfig.fit})`);
         }
@@ -1192,14 +1272,59 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
         );
       }
 
-      // 4. Construct boundaries for Trimming Options
+      // 4. Construct boundaries for Trimming Options. The conversion spans the
+      // first section's start to the last section's end; with several sections,
+      // process hooks drop samples in the gaps and close up the timeline.
       const trimConfig: { start?: number; end?: number } = {};
-      if (enableTrim.checked) {
-        trimConfig.start = parseFloat(trimStart.value);
-        trimConfig.end = parseFloat(trimEnd.value);
+      const ranges = videoTrim.getRanges();
+      let outputDuration = sourceVideoDuration;
+      if (ranges) {
+        trimConfig.start = ranges[0].start;
+        trimConfig.end = ranges[ranges.length - 1].end;
+        outputDuration = ranges.reduce((sum, r) => sum + (r.end - r.start), 0);
         console.log(
-          `Clip window enabled: ${trimConfig.start}s to ${trimConfig.end}s (Trim duration: ${(trimConfig.end - trimConfig.start).toFixed(2)}s)`,
+          `Clip window enabled: ${ranges.map((r) => `${r.start.toFixed(2)}s–${r.end.toFixed(2)}s`).join(", ")} (output duration: ${outputDuration.toFixed(2)}s)`,
         );
+      }
+
+      if (ranges && ranges.length > 1) {
+        if (wantsFastCopy) {
+          throw new Error("Joining multiple sections requires re-encoding. Turn off Fast Copy, or use a single section.");
+        }
+        // Map a timestamp (relative to the trim start) to its place in the joined
+        // output, or null when it falls in a gap between sections.
+        const base = ranges[0].start;
+        const offsets: number[] = [];
+        let acc = 0;
+        for (const r of ranges) {
+          offsets.push(acc);
+          acc += r.end - r.start;
+        }
+        const mapTime = (t: number) => {
+          const abs = t + base;
+          const i = ranges.findIndex((r) => abs >= r.start && abs < r.end);
+          return i === -1 ? null : abs - ranges[i].start + offsets[i];
+        };
+
+        const innerVideoProcess = videoConfig.process;
+        videoConfig.process = (sample) => {
+          const t = mapTime(sample.timestamp);
+          if (t === null) return null;
+          sample.setTimestamp(t);
+          return innerVideoProcess ? innerVideoProcess(sample) : sample;
+        };
+
+        // Audio is kept per sample (a few ms of granularity), judged by its midpoint
+        if (!audioConfig.discard) {
+          audioConfig.process = (sample) => {
+            const t = mapTime(sample.timestamp + sample.duration / 2);
+            if (t === null) return null;
+            const out = sample.clone();
+            out.setTimestamp(Math.max(0, t - sample.duration / 2));
+            return out;
+          };
+          if (audioModeCopy.checked) console.log("Audio will be re-encoded to join sections.");
+        }
       }
 
       // Initialize the Conversion engine thread
@@ -1221,7 +1346,8 @@ export function mountToolkit(root: ToolkitRoot, { themeElement }: MountToolkitOp
       }
 
       // Calculate maximum target duration to display progress properly
-      const totalToProcess = enableTrim.checked ? trimConfig.end! - trimConfig.start! : sourceVideoDuration;
+      // (progress is reported against the source span, including skipped gaps)
+      const totalToProcess = ranges ? trimConfig.end! - trimConfig.start! : sourceVideoDuration;
 
       // Progress updates mapping
       currentActiveConversion.onProgress = (progress, processedTime) => {

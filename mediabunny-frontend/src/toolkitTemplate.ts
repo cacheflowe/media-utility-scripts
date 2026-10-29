@@ -251,6 +251,19 @@ None detected</pre
                         💡 Drag the left/right handles above to set your trimming window.
                       </small>
                     </div>
+
+                    <div class="trim-sections">
+                      <div class="trim-sections-header">
+                        <span style="font-weight: 500; font-size: 0.9rem">Sections</span>
+                        <span>Output length: <span class="time-val" id="trim-total">0.00s</span></span>
+                      </div>
+                      <ol id="trim-section-list" class="trim-section-list"></ol>
+                      <button type="button" id="trim-add-section" class="secondary outline">+ Add Section</button>
+                      <small class="trim-sections-help">
+                        Click a section to edit it with the handles. Multiple sections are joined in time order;
+                        new sections start at the player's current position.
+                      </small>
+                    </div>
                   </div>
                 
                   </div>
